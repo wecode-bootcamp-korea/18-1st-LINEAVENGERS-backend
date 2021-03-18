@@ -1,9 +1,9 @@
 from django.db import models
 
-from product.models import Product, Product_size
+from product.models import Product, Size
 from account.models import User
 
-class Order_address(models.Model):
+class Address(models.Model):
     receiver       = models.CharField(max_length=50)
     nickname       = models.CharField(max_length=200, null=True)
     address        = models.CharField(max_length=200)
@@ -14,52 +14,45 @@ class Order_address(models.Model):
     user           = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     class Meta:
-        db_table = "order_addresses"
+        db_table = "addresses"
 
-class Order_status(models.Model):
+class OrderStatus(models.Model):
     name = models.CharField(max_length=100)
 
     class Meta:
-        db_table = "order_statuses"
+        db_table = "orderstatuses"
 
-class Pay_type(models.Model):
+class PayType(models.Model):
     name = models.CharField(max_length=100)
 
     class Meta:
-        db_table = "pay_types"
+        db_table = "paytypes"
 
 class Order(models.Model):
     order_no     = models.CharField(max_length=30, unique=True)
-    order_at     = models.DateField(auto_now_add=True)
-    order_status = models.ForeignKey(Order_status, on_delete=models.CASCADE, null=True)
+    create_at    = models.DateTimeField(auto_now_add=True)
+    order_status = models.ForeignKey(OrderStatus, on_delete=models.CASCADE, null=True)
     user         = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    address      = models.ForeignKey(Order_address, on_delete=models.CASCADE, null=True)
+    address      = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = "orders"
 
-class Order_product(models.Model):
-    quantity      = models.IntegerField()
-    product       = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-    order         = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
-    product_size  = models.ForeignKey(Product_size, on_delete=models.CASCADE, null=True)
-
-    class Meta:
-        db_table = "order_products"
-
-class Payment(models.Model):
-    pay_at   = models.DateField(auto_now_add=True)
-    result   = models.CharField(max_length=200)
-    pay_type = models.ForeignKey(Pay_type, on_delete=models.CASCADE, null=True)
-    order    = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
-
-    class Meta:
-        db_table = "payments"
-
 class Cart(models.Model):
-    quantity     = models.IntegerField()
-    user         = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    product_size = models.ForeignKey(Product_size, on_delete=models.CASCADE, null=True)
+    quantity = models.PositiveIntegerField()
+    is_order = models.BooleanField(default=False)
+    product  = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    order    = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
+    size     = models.ForeignKey(Size, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = "carts"
+
+class Payment(models.Model):
+    create_at = models.DateTimeField(auto_now_add=True)
+    result    = models.CharField(max_length=200)
+    pay_type  = models.ForeignKey(PayType, on_delete=models.CASCADE, null=True)
+    order     = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        db_table = "payments"
