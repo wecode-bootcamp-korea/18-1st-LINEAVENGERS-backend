@@ -40,13 +40,18 @@ class Favorite(models.Model):
         db_table = "favorites"
 
 class Review(models.Model):
-    content   = models.CharField(max_length=2000)
-    rating    = models.PositiveIntegerField()
-    create_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
-    order     = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
-    user      = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-
+    content     = models.CharField(max_length=2000)
+    rating      = models.PositiveIntegerField()
+    create_at   = models.DateTimeField(auto_now_add=True)
+    update_at   = models.DateTimeField(auto_now=True)
+    order       = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
+    recommander = models.ManyToManyField(
+        User,
+        through='reviewrecommand',
+        through_fields=('review', 'user'),
+        related_name='recommanded_user',
+    )
+    
     class Meta:
         db_table = "reviews"
 
@@ -59,7 +64,7 @@ class ReviewImage(models.Model):
 
 class ReviewRecommand(models.Model):
     is_recommand = models.BooleanField(default=False)
-    reivew       = models.ForeignKey(Review, on_delete=models.CASCADE, null=True)
+    review       = models.ForeignKey(Review, on_delete=models.CASCADE, null=True)
     user         = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     class Meta:
