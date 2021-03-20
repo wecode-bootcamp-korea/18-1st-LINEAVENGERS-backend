@@ -64,9 +64,9 @@ class UserSignIn(View):
             user = User.objects.get(login_id=login_id)
             
             if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-                if user_active:
-                    access_token = jwt.encode({'id':user_id}, SECRET_KEY, ALGORITHM)
-                        return JsonResponse({"message":"SUCCESS", 'access_token':access_token}, status = 200)
+                if user.is_active:
+                    access_token = jwt.encode({'id':user.id}, SECRET_KEY, ALGORITHM)
+                    return JsonResponse({"message":"SUCCESS", 'access_token':access_token}, status = 200)
                 else:
                     return JsonResponse({"message":"NONE_CERTIFICATION"}, status = 401)
             else:
