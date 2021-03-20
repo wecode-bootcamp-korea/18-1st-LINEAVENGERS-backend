@@ -35,11 +35,7 @@ class UserSignUp(View):
 
             password_hashed = (bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())).decode('utf-8')
             
-            User.objects.create(login_id=login_id, password=password_hashed, name=name, phone_number=phone_number, email=email)
-
-            u1 = User.objects.get(login_id=login_id).is_active
-
-            u1 = True
+            User.objects.create(login_id=login_id, password=password_hashed, name=name, phone_number=phone_number, email=email, is_active=True)
 
             return JsonResponse({'message':'SUCCESS'}, status = 200)
         
