@@ -25,7 +25,7 @@ class UserSignUp(View):
                 return JsonResponse({"message":"INVALID_CHARACTER"}, status = 400)
             
             if User.objects.filter(login_id=login_id).exists():
-                return JsonResponse({"message":"USER_NAME_ALREADY_EXITS"}, status = 400)
+                return JsonResponse({"message":"INVALID_LOGIN_ID"}, status = 400)
 
             if len(password) < MIN_PASSWORD_LENGTH:
                 return JsonResponse({"message":"SHORT_PASSWORD"}, status = 400)

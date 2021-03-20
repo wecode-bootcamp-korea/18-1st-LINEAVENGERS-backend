@@ -13,15 +13,15 @@ def token_decorator(func):
             return func(self, request, *arg, **karg)
             
         except DoesNotExist:
-            return JsonResponse({"message":"djqtek"}, status = 400)
+            return JsonResponse({"message":"INVALID_USER"}, status = 400)
 
         except MultipleObjectsReturned:
-            return JsonResponse({"message":"aksgek"}, status = 400)
+            return JsonResponse({"message":"INVALID_USER"}, status = 400)
         
         except KeyError:
             return JsonResponse({"message":"KEY_ERROR"}, status = 400)
         
         except json.decoder.JSONDecodeError:
-            return JsonResponse({"message": "json.decoder.JSONDecodeError"}, status = 400)
+            return JsonResponse({"message": "INVALID_JSON"}, status = 400)
 
     return wrapper
