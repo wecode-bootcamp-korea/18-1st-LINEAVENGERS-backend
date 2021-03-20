@@ -38,8 +38,8 @@ class UserSignUp(View):
             User.objects.create(login_id=login_id, password=password_hashed, name=name, phone_number=phone_number, email=email)
 
             u1 = User.objects.get(login_id=login_id).is_active
+
             u1 = True
-            u1.save()
 
             return JsonResponse({'message':'SUCCESS'}, status = 200)
         
