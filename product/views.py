@@ -8,6 +8,9 @@ from product.models import Category, Menu, Product, ProductImage
 
 class CategoryListView(View):
     def get(self, request):
+    
+        getted_menu     = request.GET.get('menu')
+        getted_category = request.GET.get('category', None)
         
         menus = Menu.objects.all()
         menuList = []
@@ -18,8 +21,8 @@ class CategoryListView(View):
                     "menuName": menu.name 
                 }
             )
-        
-        categories = Category.objects.filter(menu=1)
+
+        categories = Category.objects.filter(menu=getted_menu)
         categoryList = []
         for category in categories:
             categoryList.append(
@@ -28,52 +31,33 @@ class CategoryListView(View):
                     "categoryName": category.name,
                 }
             )
+        
+        type  = ""
+        title = ""
+        count = 0
 
+        if getted_category:
+            type = "category"
+            category = Category.objects.get(id=getted_category) 
+            title = category.name
+            count = Product.objects.filter(category=category).count()
+        else:
+            type = "menu"
+            menu = Menu.objects.get(id=getted_menu)
+            title = menu.name
+            categories = Category.objects.filter(menu=menu)
+            for category in categories:
+                count += Product.objects.filter(category=category).count()
+        
         current = [
             {
-                "type" : "category",
-                "title": category.name,
-                "count": len(Product.objects.filter(category=1))
+                "type" : type,
+                "title": title,
+                "count": count
             }
-
         ]
 
         return JsonResponse({'menuList':menuList, 'categoryList':categoryList, 'current':current}, status=200)
-
-class CategoryListView2(View):
-    def get(self, request):
-        
-        menus = Menu.objects.all()
-        menuList = []
-        for menu in menus:
-            menuList.append(
-                {
-                    "menuId"  : menu.id,
-                    "menuName": menu.name 
-                }
-            )
-        
-        categories = Category.objects.filter(menu=1)
-        categoryList = []
-        for category in categories:
-            categoryList.append(
-                {
-                    "categoryId"  : category.id,
-                    "categoryName": category.name,
-                }
-            )
-
-        current = [
-            {
-                "type" : "category",
-                "title": category.name,
-                "count": len(Product.objects.filter(category=1))
-            }
-
-        ]
-
-        return JsonResponse({'menuList':menuList, 'categoryList':categoryList, 'current':current}, status=200)
-
 
 class ProductListView(View):
     def get(self, request):
@@ -113,9 +97,9 @@ class ProductListView(View):
 
 class ProductDetailView(View):
     #@decorator
-    def get(self, request):
+    def get(self, request, product_id):
 
-        product = Product.objects.get(id=1)  
+        product = Product.objects.get(id=product_id)  
 
         if product.is_best and product.is_new:
             type = "TOP"
@@ -216,3 +200,56 @@ class MainProductView(View):
                 break;
 
         return JsonResponse({'productList':productList}, status=200)
+
+class CategoryView(View):
+    def get(self, request):
+
+        getted_menu     = request.GET.get('menu')
+        getted_category = request.GET.get('category', None)
+        
+        menus = Menu.objects.all()
+        menuList = []
+        for menu in menus:
+            menuList.append(
+                {
+                    "menuId"  : menu.id,
+                    "menuName": menu.name 
+                }
+            )
+
+        categories = Category.objects.filter(menu=getted_menu)
+        categoryList = []
+        for category in categories:
+            categoryList.append(
+                {
+                    "categoryId"  : category.id,
+                    "categoryName": category.name,
+                }
+            )
+        
+        type  = ""
+        title = ""
+        count = 0
+
+        if getted_category:
+            type = "category"
+            category = Category.objects.get(id=getted_category) 
+            title = category.name
+            count = Product.objects.filter(category=category).count()
+        else:
+            type = "menu"
+            menu = Menu.objects.get(id=getted_menu)
+            title = menu.name
+            categories = Category.objects.filter(menu=menu)
+            for category in categories:
+                count += Product.objects.filter(category=category).count()
+        
+        current = [
+            {
+                "type" : type,
+                "title": title,
+                "count": count
+            }
+        ]
+
+        return JsonResponse({'menuList':menuList, 'categoryList':categoryList, 'current':current}, status=200)

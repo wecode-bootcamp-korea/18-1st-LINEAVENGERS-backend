@@ -10,7 +10,7 @@ class Address(models.Model):
     first_contact  = models.CharField(max_length=11)
     second_contact = models.CharField(max_length=11, null=True)
     memo           = models.CharField(max_length=500, null=True)
-    is_default     = models.BooleanField(default=True)
+    is_default     = models.BooleanField(default=False)
     user           = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     class Meta:
@@ -38,11 +38,9 @@ class Payment(models.Model):
         db_table = "payments"
 
 class Order(models.Model):
-    order_no       = models.CharField(max_length=30, unique=True)
     create_at      = models.DateTimeField(auto_now_add=True)
     order_status   = models.ForeignKey(OrderStatus, on_delete=models.CASCADE, null=True)
     user           = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    address        = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     order_paytypes = models.ManyToManyField(
         PayType,
         through='payment',
