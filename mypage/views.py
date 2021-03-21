@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from product.models import Product
 from mypage.models import Favorite
 
-@decorator
+# @decorator
 class Favorite(View):
     def post(self, request):
         data = json.loads(request.body)
@@ -26,7 +26,7 @@ class Favorite(View):
             favorite_user.is_favorite = True
             favorite_user.save()
 
-            return JsonResponse({'message':'SUCCESS', 'access_token' : request.token}, status = 200)
+            return JsonResponse({'message':'SUCCESS'}, status = 200)
         
         Favorite.objects.create(
             is_favorite=True,
