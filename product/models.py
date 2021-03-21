@@ -82,4 +82,3 @@ class ProductImage(models.Model):
 
     class Meta:
         db_table = "productimages"
-    

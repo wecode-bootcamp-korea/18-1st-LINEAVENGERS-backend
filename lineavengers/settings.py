@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
-from my_settings import DATABASES, SECRET_KEY
+from my_settings import DATABASES, SECRET_KEY, EMAIL
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -149,10 +149,10 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 )
 
-
-EMAIL_HOST = 'smtp.gmail.com' 		 # 메일 호스트 서버
-EMAIL_PORT = 587 			 # 서버 포트
-EMAIL_HOST_USER = 'zlsrbrhd@gmail.com' 	 # 우리가 사용할 Gmail
-EMAIL_HOST_PASSWORD = 'qottkf3600'		 # 우리가 사용할 Gmail p
-EMAIL_USE_TLS = True			 # TLS 보안 설정
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_BACKEND       = EMAIL['EMAIL_BACKEND'] 
+EMAIL_USE_TLS       = EMAIL['EMAIL_USE_TLS'] 
+EMAIL_PORT          = EMAIL['EMAIL_PORT'] 
+EMAIL_HOST          = EMAIL['EMAIL_HOST']    
+EMAIL_HOST_USER     = EMAIL['EMAIL_HOST_USER']                     
+EMAIL_HOST_PASSWORD = EMAIL['EMAIL_HOST_PASSWORD']
+REDIRECT_PAGE       = EMAIL['REDIRECT_PAGE'] 
