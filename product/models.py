@@ -4,12 +4,13 @@ from account.models import User
 
 class Menu(models.Model):
     name = models.CharField(max_length=30)
-
+    no   = models.CharField(max_length=5, unique=True)
     class Meta:
         db_table = "menus"
 
 class Category(models.Model):
     name = models.CharField(max_length=50)
+    no   = models.CharField(max_length=5)
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
 
     class Meta:
@@ -54,7 +55,13 @@ class Product(models.Model):
         User,
         through='mypage.Favorite',
         through_fields=('product', 'user'),
-        related_name='followed_product',
+        related_name='followed_products',
+    )
+    reviewers          = models.ManyToManyField(
+        User,
+        through='mypage.Review',
+        through_fields=('product', 'user'),
+        related_name='reviewed_products',
     )
     reviewers        = models.ManyToManyField(
         User,
