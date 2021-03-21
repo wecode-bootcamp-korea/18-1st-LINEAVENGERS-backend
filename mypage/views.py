@@ -10,9 +10,27 @@ from mypage.models import Favorite
 
 @decorator
 class Favorite(View):
-def post(self, request):
-data = json.loads(request.body)
+    def post(self, request):
+        data = json.loads(request.body)
+        
+        product = data['product']
+        product = Product.objects.get(id=product)
 
-if Favorite.objects.filter(id=request.user_id).exists():
-Favorite.objects.get(id=request.user_id)
+        if Favorite.objects.filter(id=request.user_id).exists():
+            favorite_user = Favorite.objects.get(id=request.user_id)
+
+            if favorite_user.is_favorite:
+                favorite_user.is_favorite = False
+                favorite_user.save()
+            
+            favorite_user.is_favorite = True
+            favorite_user.save()
+
+            return JsonResponse({'message':'SUCCESS', 'access_token' : request.token}, status = 200)
+        
+        Favorite.objects.create(
+            is_favorite=True,
+            user=request.user,
+            product=product,
+        )
 
