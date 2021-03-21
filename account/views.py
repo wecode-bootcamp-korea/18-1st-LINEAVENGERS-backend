@@ -119,8 +119,19 @@ class Activate(View):
                 return redirect(EMAIL['REDIRECT_PAGE'])
             
             return JsonResponse({'message':'AUTH_FAIL'}, status = 400)
-            
+
         except ValidationError:
             return JsonResponse({"message":"TYPE_ERROR"}, status = 400)
         except KeyError:
             return JsonResponse({"message":"INVALID_KEY"},  status = 400)
+
+class LoginIdExist(View):
+    def post(self, request):
+        data = json.loads(request.body)
+
+        login_id = data['login_id']
+
+        if User.objects.filter(login_id=login_id).exists:
+            return JsonResponse({'message':'INVALID_LOGINID'}, status = 400)
+        
+        return JsonResponse({'message':'SUCCESS'}, status = 200)
