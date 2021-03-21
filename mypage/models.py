@@ -44,7 +44,8 @@ class Review(models.Model):
     rating      = models.PositiveIntegerField()
     create_at   = models.DateTimeField(auto_now_add=True)
     update_at   = models.DateTimeField(auto_now=True)
-    order       = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
+    product     = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    user        = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     recommander = models.ManyToManyField(
         User,
         through='reviewrecommand',

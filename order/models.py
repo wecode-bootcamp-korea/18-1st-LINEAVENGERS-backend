@@ -42,7 +42,6 @@ class Order(models.Model):
     create_at      = models.DateTimeField(auto_now_add=True)
     order_status   = models.ForeignKey(OrderStatus, on_delete=models.CASCADE, null=True)
     user           = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    address        = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     order_paytypes = models.ManyToManyField(
         PayType,
         through='payment',
