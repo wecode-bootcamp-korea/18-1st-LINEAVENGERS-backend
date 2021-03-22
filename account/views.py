@@ -1,11 +1,3 @@
-import jwt
-import json
-import bcrypt
-
-<<<<<<< HEAD
-# Create your views here.
-=======
-
 from django.views                   import View
 from django.http                    import JsonResponse
 from django.shortcuts               import redirect
@@ -140,4 +132,3 @@ class LoginIdExist(View):
             return JsonResponse({'message':'INVALID_LOGINID'}, status = 400)
         
         return JsonResponse({'message':'SUCCESS'}, status = 200)
->>>>>>> 2ed24a45cc87c5399784825cdceb26f075e540a9

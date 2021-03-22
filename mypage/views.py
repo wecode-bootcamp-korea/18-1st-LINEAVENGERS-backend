@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import json
 import bcrypt
 import jwt
@@ -7,12 +6,12 @@ from django.views import View
 from django.http import JsonResponse
 
 from account.models import User
+# from account.utils  import token_decorator
 from product.models import Product
 from mypage.models  import Favorite, Review
-from order.models   import Order
 
-# @decorator
-class FavoriteView(View):
+# @token_decorator
+class FavoriteCreate(View):
     def post(self, request):
         data = json.loads(request.body)
         
@@ -25,9 +24,7 @@ class FavoriteView(View):
             favorite_user = Favorite.objects.get(id=user.id)
 
             if favorite_user.is_favorite:
-                favorite_user.is_favorite = False
-                favorite_user.save()
-
+                favorite_user.is_favorite = Falseorder=order
                 return JsonResponse({'message':'SUCCESS'}, status = 200)
 
             favorite_user.is_favorite = True
@@ -43,15 +40,16 @@ class FavoriteView(View):
 
         return JsonResponse({'message':'SUCCESS'}, status = 200)
 
+# @token_decorator
 class ReviewCreate(View):
     def post(self, request):
         data = json.loads(request.body)
 
         content = data['content']
         rating  = data['rating']
-        oder    = data['order']
-        order   = Order.objects.get(id=order)
+        product = Product.objects.get(id=data['product'])
+        user    = User.objects.get(id=data['user'])
 
-        Review.objects.create(content=content, rating=rating, order=order)
-=======
->>>>>>> 2ed24a45cc87c5399784825cdceb26f075e540a9
+        Review.objects.create(content=content, rating=rating, product=product, user=user)
+
+
