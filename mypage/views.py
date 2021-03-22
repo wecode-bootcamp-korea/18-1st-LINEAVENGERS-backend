@@ -52,4 +52,8 @@ class ReviewCreate(View):
 
         Review.objects.create(content=content, rating=rating, product=product, user=user)
 
+# @token_decorator
+class FavoriteView(View):
+    def get(self, request):
+        data = json.loads(request.body)
 
