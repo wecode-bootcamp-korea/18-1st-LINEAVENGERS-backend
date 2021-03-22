@@ -34,6 +34,7 @@ class MainCategoryView(View):
         return JsonResponse({'menuList':menuList}, status=200)
 
 class MainProductView(View):
+    #@decorator
     def get(self, request):
 
         products    = Product.objects.all()[:20]
@@ -69,7 +70,7 @@ class MainProductView(View):
 
         return JsonResponse({'productList':productList}, status=200)
 
-class ProductDetailView(View):
+class ProductView(View):
     #@decorator
     def get(self, request, product_id):
 
@@ -83,27 +84,27 @@ class ProductDetailView(View):
         sizeList = []
         sizes = Product.objects.get(id=product.id).sizes.all()
         for size in sizes:
-            #sizeList.append(size.name)
             sizeList.append({
                 "sizeId" :size.id,
                 "name" :size.name
             })
         
-        reviewList = []
+        imageReviewList = []
         reviews = Review.objects.filter(product=product)
         for review in reviews:
+
             if not ReviewImage.objects.filter(review=review):
                 image_url = ""
             else:
                 image_url = ReviewImage.objects.filter(review=review).first().image_url
 
-            reviewList.append(
+            imageReviewList.append(
                 {
                     "user"      : review.user.name,
                     "grade"     : review.rating,
                     "date"      : datetime.strftime(review.create_at, "%Y-%m-%d %H:%M:%S"),
                     "type"      : "사이즈",
-                    "option"    : "단품",
+                    "option"    : sizeList,
                     "comment"   : review.content,
                     "image_url" : image_url
                 }
@@ -119,9 +120,12 @@ class ProductDetailView(View):
                                         "normal" : int(product.price),
                                         "sale" : int(product.discount_rate)
                                         },
-                        'reviews'       : reviewList,
+                        'reviews'      : imageReviewList,
+                        'review'       : Review.objects.aggregate(count=Count('id'))["count"],
+                        'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1),
+                        'follower'     : product.follower.all().count(),
                         'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                        'favorite'     : False,
+                        'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
                         'free_shipping': product.is_free_shipping
                         }
         
@@ -130,14 +134,13 @@ class ProductDetailView(View):
 
 
 ## 상품리스트_2021.03.21
-class ProductView(View):
+class ProducListView(View):
     #@decorator
     def get(self, request):
 
         getted_menu     = request.GET.get('menu')
         getted_category = request.GET.get('category', None)
 
-        #전체메뉴
         menus = Menu.objects.all()
         menuList = []
         for menu in menus:
@@ -148,7 +151,6 @@ class ProductView(View):
                 }
             )
         
-        #카테고리 메뉴
         categories = Category.objects.filter(menu=getted_menu)
         categoryList = []
         for category in categories:
@@ -173,7 +175,7 @@ class ProductView(View):
             products = Product.objects.filter(category=category)
             for product in products:
                 if product.is_best and product.is_new:
-                        type = "TOP"
+                    type = "TOP"
                 elif product.is_best and not product.is_new:
                     type = "BEST"
                 elif not product.is_best and product.is_new:
@@ -194,7 +196,7 @@ class ProductView(View):
                         'review'       : Review.objects.aggregate(count=Count('id'))["count"],
                         'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1),
                         'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                        'favorite'     : False,
+                        'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
                         'free_shipping': product.is_free_shipping
                     }
                 )    
@@ -206,7 +208,6 @@ class ProductView(View):
             for category in categories:
                 count += Product.objects.filter(category=category).count()
                 
-        #현재정보
         current = [
             {
                 "type" : type,
@@ -241,9 +242,9 @@ class ProductView(View):
                     'review'       : Review.objects.aggregate(count=Count('id'))["count"],
                     'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1),
                     'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                    'favorite'     : False,
+                    'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
                     'free_shipping': product.is_free_shipping
                 }
             )
 
-        return JsonResponse({'menuList':menuList, 'categoryList':categoryList, 'current':current, 'productList':productList}, status=200)
+        return JsonResponse({'categoryData':{'menuList':menuList, 'categoryList':categoryList, 'current':current}, 'productList':productList}, status=200)

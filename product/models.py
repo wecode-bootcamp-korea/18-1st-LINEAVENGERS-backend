@@ -4,6 +4,7 @@ from account.models import User
 
 class Menu(models.Model):
     name = models.CharField(max_length=30)
+
     class Meta:
         db_table = "menus"
 
@@ -49,13 +50,13 @@ class Product(models.Model):
         through_fields=('product', 'order'),
         related_name='ordered_products',
     )
-    follwers         = models.ManyToManyField(
+    follwers          = models.ManyToManyField(
         User,
         through='mypage.Favorite',
         through_fields=('product', 'user'),
         related_name='followed_products',
     )
-    reviewers          = models.ManyToManyField(
+    reviewers         = models.ManyToManyField(
         User,
         through='mypage.Review',
         through_fields=('product', 'user'),
