@@ -7,9 +7,9 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('mypage', '0001_initial'),
         ('product', '0001_initial'),
         ('account', '0001_initial'),
-        ('mypage', '0001_initial'),
     ]
 
     operations = [
