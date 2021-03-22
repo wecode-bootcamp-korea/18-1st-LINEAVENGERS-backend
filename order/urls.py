@@ -1,7 +1,9 @@
 from django.urls import path
 
-from order.views import CartView
+from order.views import CartView, OrderView, CartOrderView
 
 urlpatterns = [
-    path('/cart', CartView.as_view())
+    path('/<int:product_id>', OrderView.as_view()),
+    path('/cart', CartOrderView.as_view()),
+    path('/cart/<int:product_id>', CartView.as_view()),
 ]
