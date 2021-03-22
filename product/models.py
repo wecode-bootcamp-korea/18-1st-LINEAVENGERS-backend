@@ -50,7 +50,7 @@ class Product(models.Model):
         through_fields=('product', 'order'),
         related_name='ordered_products',
     )
-    follwers          = models.ManyToManyField(
+    follower          = models.ManyToManyField(
         User,
         through='mypage.Favorite',
         through_fields=('product', 'user'),

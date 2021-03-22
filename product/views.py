@@ -63,7 +63,7 @@ class MainProductView(View):
                     'review'       : Review.objects.aggregate(count=Count('id'))["count"],
                     'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1),
                     'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                    'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .
+                    'favorite'     : Favorite.objects.filter(user_id=1,product=product,is_favorite=1).exists(),   #데코레이터가 반영되면 user_id값 변경 .
                     'free_shipping': product.is_free_shipping
                 }
             )
