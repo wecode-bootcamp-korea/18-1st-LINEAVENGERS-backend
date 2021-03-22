@@ -62,7 +62,6 @@ class Product(models.Model):
         through_fields=('product', 'user'),
         related_name='reviewed_products',
     )
-    
     class Meta:
         db_table = "products"
 
