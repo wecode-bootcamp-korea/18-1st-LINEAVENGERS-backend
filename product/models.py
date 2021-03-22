@@ -4,12 +4,13 @@ from account.models import User
 
 class Menu(models.Model):
     name = models.CharField(max_length=30)
-
+    no   = models.CharField(max_length=5, unique=True)
     class Meta:
         db_table = "menus"
 
 class Category(models.Model):
     name = models.CharField(max_length=50)
+    no   = models.CharField(max_length=5)
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
 
     class Meta:
@@ -26,7 +27,6 @@ class Product(models.Model):
     price            = models.DecimalField(max_digits=10, decimal_places=2)
     create_at        = models.DateTimeField(auto_now_add=True)
     update_at        = models.DateTimeField(auto_now=True)
-    content          = models.TextField()
     is_best          = models.BooleanField(default=False)
     is_new           = models.BooleanField(default=True)
     is_free_shipping = models.BooleanField(default=False)
@@ -55,8 +55,21 @@ class Product(models.Model):
         User,
         through='mypage.Favorite',
         through_fields=('product', 'user'),
-        related_name='followed_product',
+        related_name='followed_products',
     )
+    reviewers          = models.ManyToManyField(
+        User,
+        through='mypage.Review',
+        through_fields=('product', 'user'),
+        related_name='reviewed_products',
+    )
+    reviewers          = models.ManyToManyField(
+        User,
+        through='mypage.Review',
+        through_fields=('product', 'user'),
+        related_name='reviewed_products',
+    )
+
     
     class Meta:
         db_table = "products"
@@ -75,4 +88,3 @@ class ProductImage(models.Model):
 
     class Meta:
         db_table = "productimages"
-    

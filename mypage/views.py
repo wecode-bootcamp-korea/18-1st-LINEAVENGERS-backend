@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import json
 import bcrypt
 import jwt
@@ -52,3 +53,5 @@ class ReviewCreate(View):
         order   = Order.objects.get(id=order)
 
         Review.objects.create(content=content, rating=rating, order=order)
+=======
+>>>>>>> 2ed24a45cc87c5399784825cdceb26f075e540a9

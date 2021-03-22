@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
-from my_settings import DATABASES, SECRET_KEY
+from my_settings import DATABASES, SECRET_KEY, EMAIL
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -149,3 +149,10 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 )
 
+EMAIL_BACKEND       = EMAIL['EMAIL_BACKEND'] 
+EMAIL_USE_TLS       = EMAIL['EMAIL_USE_TLS'] 
+EMAIL_PORT          = EMAIL['EMAIL_PORT'] 
+EMAIL_HOST          = EMAIL['EMAIL_HOST']    
+EMAIL_HOST_USER     = EMAIL['EMAIL_HOST_USER']                     
+EMAIL_HOST_PASSWORD = EMAIL['EMAIL_HOST_PASSWORD']
+REDIRECT_PAGE       = EMAIL['REDIRECT_PAGE'] 

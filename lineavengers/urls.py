@@ -16,5 +16,9 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
+<<<<<<< HEAD
     path('mypage', include('mypage.urls'))
+=======
+    path('account', include('account.urls')),
+>>>>>>> 2ed24a45cc87c5399784825cdceb26f075e540a9
 ]
