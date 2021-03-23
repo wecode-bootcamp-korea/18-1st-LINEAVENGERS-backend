@@ -115,7 +115,8 @@ class ListView(View):
         if category:
             products = Product.objects.filter(category=category)
         else:
-            products = Menu.objects.get(id=menu).category_set.all()
+            #products = Menu.objects.get(id=menu).category_set.all()
+            categories = Category.objects.filter(menu=menu)
         print(products)    
         '''
         
