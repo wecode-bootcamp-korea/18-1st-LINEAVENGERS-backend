@@ -11,7 +11,7 @@ from product.models import Product, ProductImage
 from mypage.models  import Favorite, Review
 
 # @token_decorator
-class FavoriteCreate(View):
+class FavoriteView(View):
     def post(self, request):
         data = json.loads(request.body)
         
@@ -43,7 +43,7 @@ class FavoriteCreate(View):
 
 
 # @token_decoratorall()
-class ReviewCreate(View):
+class ReviewView(View):
     def post(self, request):
         data = json.loads(request.body)
 
@@ -54,13 +54,8 @@ class ReviewCreate(View):
 
         Review.objects.create(content=content, rating=rating, product=product, user=user)
  
-class ReviewClick(View):
-    def post(self, request):
-        data = json.loads(request.body)
-
-        product = data['product']
-        product = Product.objects.get(id=product)
-
+    def get(self, request, product_id):
+        product = Product.objects.get(id=product_id)
         image = ProductImage.objects.get(product=product)
 
         product_dict = {
