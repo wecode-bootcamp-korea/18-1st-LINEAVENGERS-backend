@@ -35,7 +35,7 @@ class MainProductView(View):
             {
                 'productId'    : product.id,
                 'thumbnailUrl' : ProductImage.objects.get(Q(product=product)&Q(is_thumbnail='1')).image_url,
-                'type'         : 'NORMAL',
+                'type'         : product.type,
                 'productName'  : product.name,
                 'price'        : {
                                 "normal" : int(product.price),
@@ -47,19 +47,7 @@ class MainProductView(View):
                 'favorite'     : Favorite.objects.filter(user_id=1,product=product,is_favorite=1).exists(),   #데코레이터가 반영되면 user_id값 변경 .
                 'free_shipping': product.is_free_shipping
             } for product in Product.objects.all()[:20]]
-        
-        '''모델링 수정 필요.
-        for product in products:     
-            
-            if product.is_best and product.is_new:
-                type = "TOP"
-            elif product.is_best and not product.is_new:
-                type = "BEST"
-            elif not product.is_best and product.is_new:
-                type = "NEW"
-            else:
-                type = "NORMAL"    
-        '''
+
         return JsonResponse({'productList':product_list}, status=200)
 
 class ProductView(View):

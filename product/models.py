@@ -26,8 +26,7 @@ class Product(models.Model):
     price            = models.DecimalField(max_digits=10, decimal_places=2)
     create_at        = models.DateTimeField(auto_now_add=True)
     update_at        = models.DateTimeField(auto_now=True)
-    is_best          = models.BooleanField(default=False)
-    is_new           = models.BooleanField(default=True)
+    type             = models.CharField(max_length=20)
     is_free_shipping = models.BooleanField(default=False)
     is_soldout       = models.BooleanField(default=False)
     discount_rate    = models.DecimalField(max_digits=5, decimal_places=2)
@@ -50,18 +49,19 @@ class Product(models.Model):
         through_fields=('product', 'order'),
         related_name='ordered_products',
     )
-    follower         = models.ManyToManyField(
+    follower          = models.ManyToManyField(
         User,
         through='mypage.Favorite',
         through_fields=('product', 'user'),
         related_name='followed_products',
     )
-    reviewers        = models.ManyToManyField(
+    reviewers          = models.ManyToManyField(
         User,
         through='mypage.Review',
         through_fields=('product', 'user'),
         related_name='reviewed_products',
     )
+
     class Meta:
         db_table = "products"
 
