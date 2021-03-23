@@ -5,14 +5,15 @@ from product.views import (
     ProductDetailView,
     ProductListView, 
     MainProductView,
-    ProductListView)
+    ProductListView,
+    ProductReviewView,
+    ProductQnaView)
 
 urlpatterns = [
     path('', ProductListView.as_view()),
     path('/main-category', MainCategoryView.as_view()), 
     path('/main-product', MainProductView.as_view()),
     path('/detail/<int:product_id>', ProductDetailView.as_view()),
- #   path('/<int:product_id>', ProductDetailView.as_view()),
-#    path('/review/<int:product_id>', ReviewListView.as_view()),
-#    path('/qna/<int:product_id>', QnaListView.as_view()),
+    path('/<int:product_id>/review', ProductReviewView.as_view()),
+    path('/<int:product_id>/qna', ProductQnaView.as_view()),
 ]

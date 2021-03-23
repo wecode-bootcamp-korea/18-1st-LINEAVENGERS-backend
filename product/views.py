@@ -1,5 +1,7 @@
 from datetime      import datetime
-from mypage.models import Review, ReviewImage
+
+from django.conf.urls import url
+from mypage.models import Question, Review, ReviewImage, ReviewRecommand
 
 from django.http                  import JsonResponse, request
 from django.views                 import View
@@ -10,7 +12,7 @@ from product.models import (
     Category, 
     Menu, 
     Product, 
-    ProductImage, Type)
+    ProductImage, ProductSize, Size, Type)
 from mypage.models  import Favorite 
 
 class MainCategoryView(View):
@@ -122,3 +124,79 @@ class ProductListView(View):
             current = [{'type' : 'menu', 'title' : Menu.objects.get(id=menu).name, 'count': len(products)}]
 
         return JsonResponse({'productList':product_list, 'current':current}, status=200)
+
+
+class ProductReviewView(View):
+    #@decorator
+    def get(self, request, product_id):
+
+        offset  = int(request.GET.get('offset', 0))
+        limit   = int(request.GET.get('limit', 20))
+        filter  = request.GET.get('filter', 'RECENT')   #filter : RECENT, LATE, HIGH, LOW
+        
+        if filter == 'RECENT':
+            reviews = Review.objects.filter(product_id=product_id).order_by('create_at')
+        elif filter == 'LATE':
+            reviews = Review.objects.filter(product_id=product_id).order_by('-create_at')
+        elif filter == 'HIGH':
+            reviews = Review.objects.filter(product_id=product_id).order_by('-rating')
+        elif filter == 'LOW':
+            reviews = Review.objects.filter(product_id=product_id).order_by('rating')
+        
+        #user_id = request.user_id
+        user_id = 2 #테스트용.
+
+        review_info = {
+                        'avg_rating' : round(reviews.aggregate(rating=Avg('rating'))["rating"],1) if reviews.aggregate(rating=Avg('rating'))["rating"] else 0,
+                        'total_review': reviews.aggregate(count=Count('id'))["count"]
+        }
+
+        review_list = [{
+                        'review_id'    : review.id,
+                        'content'      : review.content,
+                        'rating'       : review.rating,
+                        'create_at'    : datetime.strftime(review.create_at, "%Y-%m-%d %H:%M:%S"),
+                        'user_id'      : review.user.id,
+                        'login_id'     : review.user.login_id,
+                        'size_name'    : Size.objects.get(id=1).name,
+                        'review_image' : ReviewImage.objects.filter(review_id=review.id).first().image_url,
+                        'review_images': [images.image_url for images in ReviewImage.objects.filter(review_id=review.id)],
+                        'recommand'    : ReviewRecommand.objects.filter(review_id=review.id).count(),
+                        'my_recommand' : Review.objects.get(id=review.id).recommander.filter(id=user_id).exists()
+        } for review in reviews[offset:limit]]
+
+        return JsonResponse({'review_info':review_info, 'review_list':review_list}, status=200)
+
+
+class ProductQnaView(View):
+    #@decorator
+    def get(self, request, product_id):
+    
+        offset  = int(request.GET.get('offset', 0))
+        limit   = int(request.GET.get('limit', 20))
+        
+        myqna   = request.GET.get('myqna','MYQNA')
+        status  = request.GET.get('status','START')   #filter : START, END
+
+        #user_id = request.user_id
+        user_id = 2 #테스트용.
+        questions = Question.objects.filter(product_id=product_id)
+
+        qna_list = [{
+                        'q_id'        : question.id,
+                        'q_content'   : question.content,
+                        'q_create_at' : datetime.strftime(question.create_at, "%Y-%m-%d %H:%M:%S"),
+                        'q_update_at' : datetime.strftime(question.update_at, "%Y-%m-%d %H:%M:%S"),
+                        'q_user_id'   : question.user.id,
+                        'q_login_id'  : question.user.login_id,
+                        'a_id'        : question.answer_set.first().id if question.answer_set.first() else '',
+                        'a_content'   : question.answer_set.first().content if question.answer_set.first() else '',
+                        'a_create_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().create_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
+                        'a_update_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().update_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
+                        'a_seller'    : question.answer_set.first().seller if question.answer_set.first() else '',
+                        'status'      : question.answer_set.exists()
+        } for question in questions[offset:limit]]
+
+        return JsonResponse({'qna_list':qna_list}, status=200)
+
+    #def post(self, request)
