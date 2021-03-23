@@ -41,8 +41,11 @@ class FavoriteView(View):
 
         return JsonResponse({'message':'SUCCESS', }, status = 200)
 
+    def get(self, request, user_id):
+        
 
-# @token_decoratorall()
+
+# @token_decorator
 class ReviewView(View):
     def post(self, request):
         data = json.loads(request.body)

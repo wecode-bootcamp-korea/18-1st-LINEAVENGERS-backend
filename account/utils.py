@@ -1,3 +1,9 @@
+import jwt
+
+from django.http import JsonResponse
+
+from my_settings import SECRET_KEY, ALGORITHM
+
 def token_decorator(func):
     def wrapper(self, request, *arg, **karg):
         try:
