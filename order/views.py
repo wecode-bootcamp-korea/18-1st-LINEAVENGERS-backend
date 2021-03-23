@@ -8,18 +8,17 @@ from django.db    import transaction
 from account.models import User
 from product.models import Product, Size
 from order.models   import Cart, Order
-#from account.utils  import token_decorator
+from account.utils  import token_decorator
 
 class OrderView(View):
-    #@token_decorator
+    @token_decorator
     @transaction.atomic
     def post(self, request, product_id):
         
         try:
             data = json.loads(request.body)
         
-            #user_id = request.user.id
-            user_id  = data['userId']
+            user_id = request.user.id
             size_id  = data['sizeId']
             quantity = data['quantity']
             order_id = data.get('orderId', None)
@@ -55,15 +54,14 @@ class OrderView(View):
             print(e)
 
 class CartView(View):
-    #@token_decorator
+    @token_decorator
     @transaction.atomic
     def post(self, request, product_id):
         
         try:
             data = json.loads(request.body)
         
-            #user_id = request.user.id  
-            user_id  = data['userId']
+            user_id = request.user.id
             size_id  = data['sizeId']
             quantity = data['quantity']
 
