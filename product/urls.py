@@ -12,7 +12,7 @@ urlpatterns = [
     path('/main-category', MainCategoryView.as_view()), 
     path('/main-product', MainProductView.as_view()),
     path('/detail/<int:product_id>', ProductDetailView.as_view()),
-    path('/<int:product_id>', ProductDetailView.as_view()),
-#    path('/review/<int:product_id>', ProductDetailView.as_view()),
-#    path('/qna/<int:product_id>', ProductDetailView.as_view()),
+ #   path('/<int:product_id>', ProductDetailView.as_view()),
+#    path('/review/<int:product_id>', ReviewListView.as_view()),
+#    path('/qna/<int:product_id>', QnaListView.as_view()),
 ]
