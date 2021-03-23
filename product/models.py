@@ -50,13 +50,13 @@ class Product(models.Model):
         through_fields=('product', 'order'),
         related_name='ordered_products',
     )
-    follower          = models.ManyToManyField(
+    follower         = models.ManyToManyField(
         User,
         through='mypage.Favorite',
         through_fields=('product', 'user'),
         related_name='followed_products',
     )
-    reviewers         = models.ManyToManyField(
+    reviewers        = models.ManyToManyField(
         User,
         through='mypage.Review',
         through_fields=('product', 'user'),

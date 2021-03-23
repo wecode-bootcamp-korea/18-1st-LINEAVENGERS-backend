@@ -111,48 +111,31 @@ class ListView(View):
         category = request.GET.get('category', None)
 
         product_list = []
+        products = []
 
         if category:
-            products = Product.objects.filter(category=category)
+            products.append(Product.objects.filter(category=category))
         else:
-            #products = Menu.objects.get(id=menu).category_set.all()
             categories = Category.objects.filter(menu=menu)
-        print(products)    
-        '''
-        
+            for category in categories:
+                products.append(category)
+
         product_list = [{
             'productId'    : product.id,
             'thumbnailUrl' : ProductImage.objects.get(Q(product=product.id)&Q(is_thumbnail='1')).image_url,
             'type'         : type,
             'productName'  : product.name,
             'price'        : {
-                            "normal" : int(product.price),
-                            "sale" : int(product.discount_rate)
+#                            "normal" : int(product.price),
+ #                           "sale" : int(product.discount_rate)
                             },
             'review'       : Review.objects.aggregate(count=Count('id'))["count"],
             'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1),
-            'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
+#            'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
             'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
             'free_shipping': product.is_free_shipping
-        }]
+        } for product in products]
 
-        product_list.append(
-                    {
-                        'productId'    : product.id,
-                        'thumbnailUrl' : ProductImage.objects.get(Q(product=product.id)&Q(is_thumbnail='1')).image_url,
-                        'type'         : type,
-                        'productName'  : product.name,
-                        'price'        : {
-                                        "normal" : int(product.price),
-                                        "sale" : int(product.discount_rate)
-                                        },
-                        'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                        'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1),
-                        'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                        'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
-                        'free_shipping': product.is_free_shipping
-                    }
-        '''
         '''
         type       = "menu"
         menu       = Menu.objects.get(id=getted_menu)
@@ -247,7 +230,7 @@ class ListView(View):
         
 
 ## 상품리스트_2021.03.21(수정해야함.)
-class ProducListView(View):
+class ProductListView(View):
     #@decorator
     def get(self, request):
 
