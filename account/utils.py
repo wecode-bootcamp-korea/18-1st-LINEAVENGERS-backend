@@ -13,8 +13,8 @@ def token_decorator(func):
         
             token         = request.headers["Authorization"]
             token_decoded = jwt.decode(token, SECRET_KEY, ALGORITHM)
-
-            user            = User.objects.get(id=token_decoded['id'])
+        
+            user    = User.objects.get(id=token_decoded['id'])
             request.user = user
             request.user_id = user.id
 
