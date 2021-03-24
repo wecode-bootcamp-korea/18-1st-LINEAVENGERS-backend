@@ -9,8 +9,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('account', '0001_initial'),
         ('order', '0001_initial'),
+        ('account', '0001_initial'),
         ('mypage', '0001_initial'),
     ]
 
