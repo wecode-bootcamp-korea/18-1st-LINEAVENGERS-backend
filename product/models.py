@@ -21,6 +21,12 @@ class Size(models.Model):
     class Meta:
         db_table = "sizes"
 
+class Type(models.Model):
+    name = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = "types"
+
 class Product(models.Model):
     name             = models.CharField(max_length=100)
     price            = models.DecimalField(max_digits=10, decimal_places=2)
@@ -30,6 +36,7 @@ class Product(models.Model):
     is_free_shipping = models.BooleanField(default=False)
     is_soldout       = models.BooleanField(default=False)
     discount_rate    = models.DecimalField(max_digits=5, decimal_places=2)
+    type             = models.ForeignKey(Type, on_delete=models.CASCADE, null=True)
     category         = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     sizes            = models.ManyToManyField(
         Size,
