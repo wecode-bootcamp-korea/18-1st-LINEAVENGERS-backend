@@ -12,7 +12,6 @@ def token_decorator(func):
             if "Authorization" not in request.headers:
                 return JsonResponse({'message':'no authorization'}, status = 400)
         
-            request.token = request.headers["Authorization"]
             token         = request.headers["Authorization"]
             token_decoded = jwt.decode(token, SECRET_KEY, ALGORITHM)
         
@@ -22,11 +21,11 @@ def token_decorator(func):
 
             return func(self, request, *arg, **karg)
             
-        # except DoesNotExist:
-        #     return JsonResponse({"message":"INVALID_USER"}, status = 400)
+        except User.DoesNotExist:
+            return JsonResponse({"message":"INVALID_USER"}, status = 400)
 
-        # except MultipleObjectsReturned:
-        #     return JsonResponse({"message":"INVALID_USER"}, status = 400)
+        except User.MultipleObjectsReturned:
+            return JsonResponse({"message":"INVALID_USER"}, status = 400)
         
         except KeyError:
             return JsonResponse({"message":"KEY_ERROR"}, status = 400)

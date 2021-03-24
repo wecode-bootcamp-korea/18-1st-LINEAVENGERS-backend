@@ -41,12 +41,11 @@ class FavoriteView(View):
 
         return JsonResponse({'message':'SUCCESS', }, status = 200)
 
-    @token_decorator
+    # @token_decorator
     def get(self, request):
-        favorites = Favorite.objects.filter(user_id=request.user_id, is_favorite=True)
+        favorites = Favorite.objects.filter(user_id='1', is_favorite=True)
         
-        favorite_products = [{'product':favorite.product.id} for favorite in favorites]
-        
+        result = [{'name':favorite.product.name, 'price':favorite.product.price, 'image':list(favorite.product.productimage_set.all().values())} for favorite in favorites]
         
         # result = [product = Product.objects.get(id=favorite_product['product'])
         # {'name':product.name, 'price':product.price, 'image':ProductImage.objects.get()} 
@@ -75,13 +74,14 @@ class FavoriteView(View):
         return JsonResponse({"result":result}, status = 200)
             
 class ReviewView(View):
-    @token_decorator
+    # @token_decorator
     def post(self, request):
         data = json.loads(request.body)
 
         content = data['content']
         rating  = data['rating']
         product = Product.objects.get(id=data['product'])
-        user    = User.objects.get(id=data['user'])
 
-        Review.objects.create(content=content, rating=rating, product=product, user=user)
+        Review.objects.create(content=content, rating=rating, product=product, user_id='2')
+
+        return JsonResponse({"message":"SUCCESS"}, status = 200)
