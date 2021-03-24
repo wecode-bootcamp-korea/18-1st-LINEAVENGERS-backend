@@ -30,13 +30,11 @@ class MainCategoryView(View):
                     "categoryName":category.name
                 } for category in Category.objects.filter(menu=menu)]
             } for menu in Menu.objects.all()]
-            
         return JsonResponse({'menuList':menu_list}, status=200)
 
 class MainProductView(View):
     #@token_decorator2
     def get(self, request):
-
         try:
             product_list = [
             {
@@ -58,17 +56,13 @@ class MainProductView(View):
             return JsonResponse({'message':'thumbnailUrl NOT EXIST'}, status=404)
         except ProductImage.MultipleObjectsReturned:
             return JsonResponse({'message':'thumbnailUrl MULTIPLE RETURNED'}, status=404)
-
         return JsonResponse({'productList':product_list}, status=200)
 
 class ProductDetailView(View):
     #@decorator
     def get(self, request, product_id):
-
         try:
-
-            product = Product.objects.get(id=product_id)
-
+            product       = Product.objects.get(id=product_id)
             productDetail = {
                             'productId'    : product.id,
                             'imageUrls'    : [image.image_url for image in ProductImage.objects.filter(product=product)],
@@ -100,26 +94,21 @@ class ProductDetailView(View):
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
                             'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
                             'free_shipping': product.is_free_shipping
-                            }
-                
+                            }                
             return JsonResponse({'productDetail':productDetail}, status=200)
-
         except Product.DoesNotExist:
             return JsonResponse({'message':'PRODUCT NOT EXIST'}, status=404)
         except Product.MultipleObjectsReturned:
             return JsonResponse({'message':'PRODUCT MULTIPLE RETURNED'}, status=404)
 
-
 class ProductListView(View):
     #@decorator
-    def get(self, request):
-        
+    def get(self, request):        
         try:
-
             menu     = request.GET.get('menu')
             category = request.GET.get('category', None)
-            page  = int(request.GET.get('page', 0))
-            limit   = int(request.GET.get('limit', 20))
+            page     = int(request.GET.get('page', 0))
+            limit    = int(request.GET.get('limit', 20))
 
             if filter == 'RECENT':
                 reviews = Review.objects.filter(product_id=product_id).order_by('create_at')
@@ -130,9 +119,8 @@ class ProductListView(View):
             elif filter == 'LOW':
                 reviews = Review.objects.filter(product_id=product_id).order_by('rating')
 
-            products = Product.objects.filter(Q(category__menu_id=menu) | Q(category_id=category))
-            count    = products.count()
-
+            products     = Product.objects.filter(Q(category__menu_id=menu) | Q(category_id=category))
+            count        = products.count()
             product_list = [{
                             'productId'    : product.id,
                             'thumbnailUrl' : ProductImage.objects.get(Q(product=product.id)&Q(is_thumbnail='1')).image_url,
@@ -147,10 +135,8 @@ class ProductListView(View):
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
                             'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
                             'free_shipping': product.is_free_shipping
-            } for product in products[page:limit]]
-            
-            return JsonResponse({'productList':product_list, 'count':count}, status=200)
-        
+            } for product in products[page:limit]]            
+            return JsonResponse({'productList':product_list, 'count':count}, status=200)        
         except ProductImage.DoesNotExist:
             return JsonResponse({'message':'thumbnailUrl NOT EXIST'}, status=404)
         except ProductImage.MultipleObjectsReturned:
@@ -160,16 +146,12 @@ class ProductListView(View):
         except Type.MultipleObjectsReturned:
             return JsonResponse({'message':'thumbnailUrl MULTIPLE RETURNED'}, status=404)
 
-
 class ProductReviewView(View):
-
     def get(self, request, product_id):
-
         try:
-
             page    = int(request.GET.get('page', 0))
             limit   = int(request.GET.get('limit', 20))
-            filter  = request.GET.get('filter', 'RECENT')   #filter : RECENT, LATE, HIGH, LOW
+            filter  = request.GET.get('filter', 'RECENT')
             
             if filter == 'RECENT':
                 reviews = Review.objects.filter(product_id=product_id).order_by('create_at')
@@ -181,13 +163,11 @@ class ProductReviewView(View):
                 reviews = Review.objects.filter(product_id=product_id).order_by('rating')
             
             #user_id = request.user_id
-            user_id = 1 #테스트용.
-
+            user_id     = 1 #테스트용.
             review_info = {
-                            'avg_rating' : round(reviews.aggregate(rating=Avg('rating'))["rating"],1) if reviews.aggregate(rating=Avg('rating'))["rating"] else 0,
+                            'avg_rating'  : round(reviews.aggregate(rating=Avg('rating'))["rating"],1) if reviews.aggregate(rating=Avg('rating'))["rating"] else 0,
                             'total_review': reviews.aggregate(count=Count('id'))["count"]
             }
-
             review_list = [{
                             'review_id'    : review.id,
                             'content'      : review.content,
@@ -201,9 +181,7 @@ class ProductReviewView(View):
                             'recommand'    : ReviewRecommand.objects.filter(review_id=review.id).count(),
                             'my_recommand' : Review.objects.get(id=review.id).recommander.filter(id=user_id).exists()
             } for review in reviews[page:limit]]
-
-            return JsonResponse({'review_info':review_info, 'review_list':review_list}, status=200)
-        
+            return JsonResponse({'review_info':review_info, 'review_list':review_list}, status=200)        
         except Size.DoesNotExist:
             return JsonResponse({'message':'Size NOT EXIST'}, status=404)
         except Size.MultipleObjectsReturned:
@@ -213,19 +191,13 @@ class ProductReviewView(View):
         except Review.MultipleObjectsReturned:
             return JsonResponse({'message':'Review MULTIPLE RETURNED'}, status=404)
 
-
 class ProductQnaView(View):
     #@token_decorator
-    def get(self, request, product_id):
-    
-        page  = int(request.GET.get('page', 0))
-        limit   = int(request.GET.get('limit', 20))
-        
-        status  = request.GET.get('status',False)
-
+    def get(self, request, product_id):    
+        page      = int(request.GET.get('page', 0))
+        limit     = int(request.GET.get('limit', 20))
         questions = Question.objects.filter(product_id=product_id)
-
-        qna_list = [{
+        qna_list  = [{
                         'q_id'        : question.id,
                         'q_content'   : question.content,
                         'q_create_at' : datetime.strftime(question.create_at, "%Y-%m-%d %H:%M:%S"),
@@ -239,22 +211,16 @@ class ProductQnaView(View):
                         'a_seller'    : "판매자" if question.answer_set.first() else '',
                         'status'      : question.answer_set.exists()
         } for question in questions[page:limit]]
-
         return JsonResponse({'qna_list':qna_list}, status=200)
-
 
 class MyProductQnaView(View):
     @token_decorator
-    def get(self, request, product_id):
-    
-        page    = int(request.GET.get('page', 0))
-        limit   = int(request.GET.get('limit', 20))
-        
-        answer_status    = request.GET.get('status',False)
+    def get(self, request, product_id):    
+        page      = int(request.GET.get('page', 0))
+        limit     = int(request.GET.get('limit', 20))
         user_id   = request.user_id
         questions = Question.objects.filter(Q(product_id=product_id)&Q(user_id=user_id))
-
-        qna_list = [{
+        qna_list  = [{
                         'q_id'        : question.id,
                         'q_content'   : question.content,
                         'q_create_at' : datetime.strftime(question.create_at, "%Y-%m-%d %H:%M:%S"),
@@ -268,13 +234,11 @@ class MyProductQnaView(View):
                         'a_seller'    : "판매자" if question.answer_set.first() else '',
                         'status'      : question.answer_set.exists()
         } for question in questions[page:limit]]
-
         return JsonResponse({'qna_list':qna_list}, status=200)
 
     @token_decorator
     def post(self, request, product_id):
-        try:
-            
+        try:            
             user_id = request.user_id
             data    = json.loads(request.body)
             content = data['content']
@@ -284,9 +248,7 @@ class MyProductQnaView(View):
                 product_id = product_id,
                 user_id    = user_id
             )
-
             return JsonResponse({'message':'SUCCESS'}, status=201)
-
         except KeyError:
             return JsonResponse({'message':'KEY ERROR'}, status=400)
         except JSONDecodeError:
@@ -294,22 +256,16 @@ class MyProductQnaView(View):
         except Exception as e:
             print(e)
 
-
-class QnaDetailView(View):
-    
+class QnaDetailView(View):    
     @token_decorator
     def patch(self, request, question_id):
         try:
-
-            data    = json.loads(request.body)
-            content = data['content']
-
-            question =  Question.objects.get(id=question_id)
+            data             = json.loads(request.body)
+            content          = data['content']
+            question         =  Question.objects.get(id=question_id)
             question.content = content
             question.save()
-
             return JsonResponse({'message':'SUCCESS'}, status=201)
-
         except KeyError:
             return JsonResponse({'message':'KEY ERROR'}, status=400)
         except Question.DoesNotExist:
@@ -318,25 +274,16 @@ class QnaDetailView(View):
             return JsonResponse({'message':'MULTIPLE OBJECTS ERROR'}, status=400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
-        except Exception as e:
-            print(e)
 
     @token_decorator
     def delete(self, request, question_id):
         try:
-
             question =  Question.objects.get(id=question_id)
             question.delete()
-
             return JsonResponse({'message':'SUCCESS'}, status=201)
-
-        except KeyError:
-            return JsonResponse({'message':'KEY ERROR'}, status=400)
         except Question.DoesNotExist:
             return JsonResponse({'message':'NOT EXIST ERROR'}, status=400)
         except Question.MultipleObjectsReturned:
             return JsonResponse({'message':'MULTIPLE OBJECTS ERROR'}, status=400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
-        except Exception as e:
-            print(e)
