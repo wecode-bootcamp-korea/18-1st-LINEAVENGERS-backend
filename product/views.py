@@ -1,10 +1,10 @@
 import json
 from datetime      import datetime
 
-from django.conf.urls import url
+from django.conf.urls       import url
 from django.db.models.query import QuerySet
-from mypage.models    import Question, Review, ReviewImage, ReviewRecommand
-from json.decoder     import JSONDecodeError
+from mypage.models          import Question, Review, ReviewImage, ReviewRecommand
+from json.decoder           import JSONDecodeError
 
 from django.http                  import JsonResponse, request
 from django.views                 import View
@@ -32,6 +32,22 @@ class MainCategoryView(View):
             } for menu in Menu.objects.all()]
             
         return JsonResponse({'menuList':menu_list}, status=200)
+
+'''
+class SubCategoryView(View):
+    def get(self, request):
+        menu_list = [
+            {
+                "menuId"      : menu.id,
+                "menuName"    : menu.name,
+                "categoryList": [{
+                    "categoryId"  :category.id,
+                    "categoryName":category.name
+                } for category in Category.objects.filter(menu=menu)]
+            } for menu in Menu.objects.all()]
+            
+        return JsonResponse({'menuList':menu_list}, status=200)
+'''
 
 class MainProductView(View):
     #@token_decorator
@@ -135,6 +151,7 @@ class ProductReviewView(View):
     def get(self, request, product_id):
 
         offset  = int(request.GET.get('offset', 0))
+        #offset    = int(request.GET.get('page', 0))
         limit   = int(request.GET.get('limit', 20))
         filter  = request.GET.get('filter', 'RECENT')   #filter : RECENT, LATE, HIGH, LOW
         
@@ -173,17 +190,15 @@ class ProductReviewView(View):
 
 
 class ProductQnaView(View):
-    @token_decorator
+    #@token_decorator
     def get(self, request, product_id):
     
         offset  = int(request.GET.get('offset', 0))
         limit   = int(request.GET.get('limit', 20))
         
-        myqna   = request.GET.get('myqna','MYQNA')
-        status  = request.GET.get('status','START')   #filter : START, END
+        myqna   = request.GET.get('myqna',False)
+        status  = request.GET.get('status',False)   #filter : ING, END
 
-        #user_id = request.user_id
-        user_id = 2 #테스트용.
         questions = Question.objects.filter(product_id=product_id)
 
         qna_list = [{
@@ -197,18 +212,47 @@ class ProductQnaView(View):
                         'a_content'   : question.answer_set.first().content if question.answer_set.first() else '',
                         'a_create_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().create_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
                         'a_update_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().update_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
-                        'a_seller'    : question.answer_set.first().seller if question.answer_set.first() else '',
+                        'a_seller'    : "판매자" if question.answer_set.first() else '',
                         'status'      : question.answer_set.exists()
         } for question in questions[offset:limit]]
 
         return JsonResponse({'qna_list':qna_list}, status=200)
 
+ㄴ
+class MyProductQnaView(View):
     @token_decorator
+    def get(self, request, product_id):
+    
+        offset  = int(request.GET.get('offset', 0))
+        limit   = int(request.GET.get('limit', 20))
+        
+        status  = request.GET.get('status',False)   #filter : ING, END
+
+        questions = Question.objects.filter(product_id=product_id)
+
+        qna_list = [{
+                        'q_id'        : question.id,
+                        'q_content'   : question.content,
+                        'q_create_at' : datetime.strftime(question.create_at, "%Y-%m-%d %H:%M:%S"),
+                        'q_update_at' : datetime.strftime(question.update_at, "%Y-%m-%d %H:%M:%S"),
+                        'q_user_id'   : question.user.id,
+                        'q_login_id'  : question.user.login_id,
+                        'a_id'        : question.answer_set.first().id if question.answer_set.first() else '',
+                        'a_content'   : question.answer_set.first().content if question.answer_set.first() else '',
+                        'a_create_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().create_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
+                        'a_update_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().update_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
+                        'a_seller'    : "판매자" if question.answer_set.first() else '',
+                        'status'      : question.answer_set.exists()
+        } for question in questions[offset:limit]]
+
+        return JsonResponse({'qna_list':qna_list}, status=200)
+
+    #@token_decorator
     def post(self, request, product_id):
         try:
-                
-            user_id = request.user_id
-            #user_id = 2 #테스트용.
+            
+            #user_id = request.user_id
+            user_id = 2 #테스트용.
 
             data = json.loads(request.body)
 
@@ -236,8 +280,8 @@ class QnaDetailView(View):
     def patch(self, request, question_id):
         try:
             
-            #user_id = request.user_id
-            user_id = 2 #테스트용.
+            user_id = request.user_id
+            #user_id = 2 #테스트용.
 
             data = json.loads(request.body)
 
@@ -247,7 +291,7 @@ class QnaDetailView(View):
             question.content = content
             question.save()
 
-            return JsonResponse({'message':'SUCCESS'}, status=200)
+            return JsonResponse({'message':'SUCCESS'}, status=201)
 
         except KeyError:
             return JsonResponse({'message':'KEY ERROR'}, status=400)
@@ -264,13 +308,13 @@ class QnaDetailView(View):
     def delete(self, request, question_id):
         try:
                 
-            #user_id = request.user_id
-            user_id = 2 #테스트용.
+            user_id = request.user_id
+            #user_id = 2 #테스트용.
 
             question =  Question.objects.get(id=question_id)
             question.delete()
 
-            return JsonResponse({'message':'SUCCESS'}, status=200)
+            return JsonResponse({'message':'SUCCESS'}, status=201)
 
         except KeyError:
             return JsonResponse({'message':'KEY ERROR'}, status=400)
