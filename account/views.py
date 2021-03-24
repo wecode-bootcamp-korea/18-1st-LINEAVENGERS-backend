@@ -123,7 +123,7 @@ class Activate(View):
             return JsonResponse({"message":"TYPE_ERROR"}, status = 400)
             
         except KeyError:
-            return JsonResponse({"message":"INVALID_KEY"},  status = 400)/review
+            return JsonResponse({"message":"INVALID_KEY"},  status = 400)
 
 class LoginIdExist(View):
     def post(self, request):
