@@ -13,112 +13,82 @@ from account.utils  import token_decorator
 class OrderView(View):
     @token_decorator
     @transaction.atomic
-    def post(self, request, product_id):
-        
+    def post(self, request, product_id):        
         try:
-            data = json.loads(request.body)
-        
-            user_id = request.user.id
-            size_id  = data['size_id']
-            quantity = data['quantity']
-            order_id = data.get('order_id', None)
-            
+            data     = json.loads(request.body)        
+            user_id  = request.user.id
+            size_id  = int(data['size_id'])
+            quantity = int(data['quantity'])
+            order_id = int(data.get('order_id', None))
+
             if not Size.objects.filter(id=size_id).exists():
                 return JsonResponse({"message": "INVALID_SIZE"}, status = 400)
-
-            if not quantity.isdigit() or not quantity:
-                return JsonResponse({"message": "INVALID_QUANTITY"}, status = 400)
-
             if Order.objects.filter(id=order_id, order_status=1).exists():
                 Cart.objects.filter(order_id=order_id, product_id=product_id).delete()
-
             order = Order.objects.create(
                 user            = User.objects.get(id=user_id),
                 order_status_id = 2,
             )
-
             Cart.objects.create(
                 quantity = quantity,
                 product  = Product.objects.get(id=product_id),
                 order    = order,
                 size     = Size.objects.get(id=size_id)
             )
-
-            return JsonResponse({'message':'SUCCESS'}, status = 201)            
-        
+            return JsonResponse({'message':'SUCCESS'}, status = 201)         
         except KeyError:
             return JsonResponse({"message": "KEY_ERROR"}, status = 400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
-        except Exception as e:
-            print(e)
 
 class CartView(View):
     @token_decorator
     @transaction.atomic
-    def post(self, request, product_id):
-        
+    def post(self, request, product_id):        
         try:
-            data = json.loads(request.body)
-        
-            user_id = request.user.id
-            size_id  = data['size_id']
-            quantity = data['quantity']
+            data     = json.loads(request.body)        
+            user_id  = request.user.id
+            size_id  = int(data['size_id'])
+            quantity = int(data['quantity'])
 
             if not Size.objects.filter(id=size_id).exists():
                 return JsonResponse({"message": "INVALID SIZE"}, status = 400)
-
-            if not quantity.isdigit() or not quantity:
-                return JsonResponse({"message": "INVALID QUANTITY"}, status = 400)
-
             if Order.objects.filter(user_id=user_id, order_status=1).exists():
                 order = Order.objects.filter(user_id=user_id, order_status=1).last()
             else:
                 order = Order.objects.create(
                     order_status_id = 1,
                     user = User.objects.get(id=user_id)
-                )
-            
+                )            
             Cart.objects.create(
                 quantity = quantity,
                 product  = Product.objects.get(id=product_id),
                 order    = order,
                 size     = Size.objects.get(id=size_id)
             )
-
-            return JsonResponse({'message':'SUCCESS'}, status = 201)            
-        
+            return JsonResponse({'message':'SUCCESS'}, status = 201)                    
         except KeyError:
             return JsonResponse({"message": "KEY ERROR"}, status = 400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
-        except Exception as e:
-            print(e)
 
 class CartOrderView(View):
-    #@token_decorator
-    def post(self, request):
-        
+    @token_decorator
+    def post(self, request):        
         try:
-            data = json.loads(request.body)
-        
-            user_id = request.user.id
-            order_id = data['order_id']
+            data     = json.loads(request.body)        
+            user_id  = int(data['user_id'])
+            order_id = int(data['order_id'])
             IN_CART  = 1
 
             order = Order.objects.get(id=order_id, user_id=user_id)
             if not order.order_status_id == IN_CART:
                 return JsonResponse({"message": "INVALID_STATUS"}, status = 400)
-
             Order.objects.filter(user_id=user_id, order_id=order_id).update(order_status_id=2)
-
-            return JsonResponse({'message':'SUCCESS'}, status = 201)            
-        
+            return JsonResponse({'message':'SUCCESS'}, status = 201)                    
         except KeyError:
             return JsonResponse({"message": "KEY ERROR"}, status = 400)
         except Order.DoesNotExist:
             return JsonResponse({"message": "NOT EXIST"}, status = 400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
-        except Exception as e:
-            print(e)

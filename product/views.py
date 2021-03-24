@@ -18,6 +18,7 @@ from product.models import (
     ProductImage, Size, Type)
 from mypage.models  import Favorite 
 from account.utils  import token_decorator
+from order.models   import Cart, Order
 
 class MainCategoryView(View):
     def get(self, request):
@@ -67,10 +68,10 @@ class ProductDetailView(View):
                             'productId'    : product.id,
                             'imageUrls'    : [image.image_url for image in ProductImage.objects.filter(product=product)],
                             'type'         : "사이즈",
-                            'options'      : [{
-                                                "sizeId":size.id,
-                                                "name"  :size.name
-                                            } for size in Product.objects.get(id=product.id).sizes.all()],
+                            'options'      : {
+                                                "sizeId": Product.objects.get(id=product.id).sizes.first().id,
+                                                "name"  : Product.objects.get(id=product.id).sizes.first().name
+                                            },
                             'name'         : product.name,
                             'price'        : {
                                             "normal" : int(product.price),
@@ -81,10 +82,10 @@ class ProductDetailView(View):
                                                 "grade"     : review.rating,
                                                 "date"      : datetime.strftime(review.create_at, "%Y-%m-%d %H:%M:%S"),
                                                 "type"      : "사이즈",
-                                                "option"    : [{
-                                                                "sizeId":size.id,
-                                                                "name":size.name
-                                                            } for size in Product.objects.get(id=product.id).sizes.all()],
+                                                "option"    : {
+                                                                "sizeId": Product.objects.get(id=product.id).sizes.first().id,
+                                                                "name"  : Product.objects.get(id=product.id).sizes.first().name
+                                                            },
                                                 "comment"   : review.content,
                                                 "image_url" : ReviewImage.objects.filter(review=review).first().image_url
                                             } for review in Review.objects.filter(product=product)],
@@ -213,6 +214,24 @@ class ProductQnaView(View):
         } for question in questions[page:limit]]
         return JsonResponse({'qna_list':qna_list}, status=200)
 
+    @token_decorator
+    def post(self, request, product_id):
+        try:            
+            user_id = request.user_id
+            data    = json.loads(request.body)
+            content = data['content']
+
+            Question.objects.create(
+                content    = content,
+                product_id = product_id,
+                user_id    = user_id
+            )
+            return JsonResponse({'message':'SUCCESS'}, status=201)
+        except KeyError:
+            return JsonResponse({'message':'KEY ERROR'}, status=400)
+        except JSONDecodeError:
+            return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
+
 class MyProductQnaView(View):
     @token_decorator
     def get(self, request, product_id):    
@@ -236,24 +255,6 @@ class MyProductQnaView(View):
         } for question in questions[page:limit]]
         return JsonResponse({'qna_list':qna_list}, status=200)
 
-    @token_decorator
-    def post(self, request, product_id):
-        try:            
-            user_id = request.user_id
-            data    = json.loads(request.body)
-            content = data['content']
-
-            Question.objects.create(
-                content    = content,
-                product_id = product_id,
-                user_id    = user_id
-            )
-            return JsonResponse({'message':'SUCCESS'}, status=201)
-        except KeyError:
-            return JsonResponse({'message':'KEY ERROR'}, status=400)
-        except JSONDecodeError:
-            return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
-
 class QnaDetailView(View):    
     @token_decorator
     def patch(self, request, question_id):
@@ -274,7 +275,7 @@ class QnaDetailView(View):
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
 
     @token_decorator
-    def delete(self, request, question_id):
+    def delete(self, request, product_id, question_id):
         try:
             question =  Question.objects.get(id=question_id)
             question.delete()
