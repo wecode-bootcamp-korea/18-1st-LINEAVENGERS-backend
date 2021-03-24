@@ -45,8 +45,9 @@ class FavoriteView(View):
         
         result = [{
             'name':favorite.product.name,
+            'user_name':favorite.user.name,
             'price':favorite.product.price,
-            'image':list(favorite.product.productimage_set.all().values())
+            'image':favorite.product.productimage_set.filter(is_thumbnail=True)[0].image_url
         } for favorite in favorites]
         
         return JsonResponse({"result":result}, status = 200)
