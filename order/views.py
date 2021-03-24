@@ -19,9 +19,9 @@ class OrderView(View):
             data = json.loads(request.body)
         
             user_id = request.user.id
-            size_id  = data['sizeId']
+            size_id  = data['size_id']
             quantity = data['quantity']
-            order_id = data.get('orderId', None)
+            order_id = data.get('order_id', None)
             
             if not Size.objects.filter(id=size_id).exists():
                 return JsonResponse({"message": "INVALID_SIZE"}, status = 400)
@@ -62,7 +62,7 @@ class CartView(View):
             data = json.loads(request.body)
         
             user_id = request.user.id
-            size_id  = data['sizeId']
+            size_id  = data['size_id']
             quantity = data['quantity']
 
             if not Size.objects.filter(id=size_id).exists():
@@ -102,9 +102,8 @@ class CartOrderView(View):
         try:
             data = json.loads(request.body)
         
-            #user_id = request.user.id
-            user_id  = data['userId']
-            order_id = data['orderId']
+            user_id = request.user.id
+            order_id = data['order_id']
             IN_CART  = 1
 
             order = Order.objects.get(id=order_id, user_id=user_id)
