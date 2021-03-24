@@ -7,7 +7,8 @@ from product.views import (
     MainProductView,
     ProductListView,
     ProductReviewView,
-    ProductQnaView)
+    ProductQnaView,
+    QnaDetailView)
 
 urlpatterns = [
     path('', ProductListView.as_view()),
@@ -16,4 +17,5 @@ urlpatterns = [
     path('/detail/<int:product_id>', ProductDetailView.as_view()),
     path('/<int:product_id>/review', ProductReviewView.as_view()),
     path('/<int:product_id>/qna', ProductQnaView.as_view()),
+    path('/<int:product_id>/qna/<int:question_id>', QnaDetailView.as_view()),
 ]

@@ -1,7 +1,10 @@
+import json
 from datetime      import datetime
 
 from django.conf.urls import url
-from mypage.models import Question, Review, ReviewImage, ReviewRecommand
+from django.db.models.query import QuerySet
+from mypage.models    import Question, Review, ReviewImage, ReviewRecommand
+from json.decoder     import JSONDecodeError
 
 from django.http                  import JsonResponse, request
 from django.views                 import View
@@ -12,8 +15,9 @@ from product.models import (
     Category, 
     Menu, 
     Product, 
-    ProductImage, ProductSize, Size, Type)
+    ProductImage, Size, Type)
 from mypage.models  import Favorite 
+from account.utils  import token_decorator
 
 class MainCategoryView(View):
     def get(self, request):
@@ -30,7 +34,7 @@ class MainCategoryView(View):
         return JsonResponse({'menuList':menu_list}, status=200)
 
 class MainProductView(View):
-    #@decorator
+    #@token_decorator
     def get(self, request):
 
         product_list = [
@@ -127,7 +131,7 @@ class ProductListView(View):
 
 
 class ProductReviewView(View):
-    #@decorator
+
     def get(self, request, product_id):
 
         offset  = int(request.GET.get('offset', 0))
@@ -143,8 +147,8 @@ class ProductReviewView(View):
         elif filter == 'LOW':
             reviews = Review.objects.filter(product_id=product_id).order_by('rating')
         
-        #user_id = request.user_id
-        user_id = 2 #테스트용.
+        user_id = request.user_id
+        #user_id = 2 #테스트용.
 
         review_info = {
                         'avg_rating' : round(reviews.aggregate(rating=Avg('rating'))["rating"],1) if reviews.aggregate(rating=Avg('rating'))["rating"] else 0,
@@ -169,7 +173,7 @@ class ProductReviewView(View):
 
 
 class ProductQnaView(View):
-    #@decorator
+    @token_decorator
     def get(self, request, product_id):
     
         offset  = int(request.GET.get('offset', 0))
@@ -199,4 +203,82 @@ class ProductQnaView(View):
 
         return JsonResponse({'qna_list':qna_list}, status=200)
 
-    #def post(self, request)
+    @token_decorator
+    def post(self, request, product_id):
+        try:
+                
+            user_id = request.user_id
+            #user_id = 2 #테스트용.
+
+            data = json.loads(request.body)
+
+            content  = data['content']
+
+            Question.objects.create(
+                content    = content,
+                product_id = product_id,
+                user_id    = user_id
+            )
+
+            return JsonResponse({'message':'SUCCESS'}, status=201)
+
+        except KeyError:
+            return JsonResponse({'message':'KEY ERROR'}, status=400)
+        except JSONDecodeError:
+            return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
+        except Exception as e:
+            print(e)
+
+
+class QnaDetailView(View):
+    
+    @token_decorator
+    def patch(self, request, question_id):
+        try:
+            
+            #user_id = request.user_id
+            user_id = 2 #테스트용.
+
+            data = json.loads(request.body)
+
+            content  = data['content']
+
+            question =  Question.objects.get(id=question_id)
+            question.content = content
+            question.save()
+
+            return JsonResponse({'message':'SUCCESS'}, status=200)
+
+        except KeyError:
+            return JsonResponse({'message':'KEY ERROR'}, status=400)
+        except Question.DoesNotExist:
+            return JsonResponse({'message':'NOT EXIST ERROR'}, status=400)
+        except Question.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE OBJECTS ERROR'}, status=400)
+        except JSONDecodeError:
+            return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
+        except Exception as e:
+            print(e)
+
+    @token_decorator
+    def delete(self, request, question_id):
+        try:
+                
+            #user_id = request.user_id
+            user_id = 2 #테스트용.
+
+            question =  Question.objects.get(id=question_id)
+            question.delete()
+
+            return JsonResponse({'message':'SUCCESS'}, status=200)
+
+        except KeyError:
+            return JsonResponse({'message':'KEY ERROR'}, status=400)
+        except Question.DoesNotExist:
+            return JsonResponse({'message':'NOT EXIST ERROR'}, status=400)
+        except Question.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE OBJECTS ERROR'}, status=400)
+        except JSONDecodeError:
+            return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
+        except Exception as e:
+            print(e)
