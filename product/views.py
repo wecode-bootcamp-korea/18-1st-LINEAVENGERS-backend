@@ -253,8 +253,6 @@ class MyProductQnaView(View):
             return JsonResponse({'message':'KEY ERROR'}, status=400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
-        except Exception as e:
-            print(e)
 
 class QnaDetailView(View):    
     @token_decorator
