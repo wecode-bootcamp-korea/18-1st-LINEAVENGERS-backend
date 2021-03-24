@@ -21,16 +21,22 @@ class Size(models.Model):
     class Meta:
         db_table = "sizes"
 
+class Type(models.Model):
+    name = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = "types"
+
 class Product(models.Model):
     name             = models.CharField(max_length=100)
     price            = models.DecimalField(max_digits=10, decimal_places=2)
     create_at        = models.DateTimeField(auto_now_add=True)
     update_at        = models.DateTimeField(auto_now=True)
-    is_best          = models.BooleanField(default=False)
-    is_new           = models.BooleanField(default=True)
+    type             = models.CharField(max_length=20)
     is_free_shipping = models.BooleanField(default=False)
     is_soldout       = models.BooleanField(default=False)
     discount_rate    = models.DecimalField(max_digits=5, decimal_places=2)
+    type             = models.ForeignKey(Type, on_delete=models.CASCADE, null=True)
     category         = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     sizes            = models.ManyToManyField(
         Size,
@@ -50,7 +56,7 @@ class Product(models.Model):
         through_fields=('product', 'order'),
         related_name='ordered_products',
     )
-    follwers          = models.ManyToManyField(
+    follower          = models.ManyToManyField(
         User,
         through='mypage.Favorite',
         through_fields=('product', 'user'),
