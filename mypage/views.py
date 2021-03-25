@@ -64,3 +64,27 @@ class ReviewView(View):
         Review.objects.create(content=content, rating=rating, product=product, user=request.user)
 
         return JsonResponse({"message":"SUCCESS"}, status = 200)
+
+    @token_decorator
+    def get(self, request):
+        #user_id = request.user_id
+        user_id = 1
+        product_list = []
+        orders = Order.objects.filter(Q(user_id=user_id) & ~Q(order_status=1))
+        print(orders)
+        for order in orders:
+            print(order.id)
+            product_list +=[{
+                'order_id'      : order.id,
+                'create_at'     : datetime.strftime(order.create_at, "%Y-%m-%d %H:%M:%S"),
+                'quantity'      : cart.quantity,
+                'size_id'       : cart.size.id,
+                'size_name'     : cart.size.name,
+                'product_id'    : cart.product.id,
+                'product_name'  : cart.product.name,
+                'thumbnail_url' : ProductImage.objects.get(Q(product=cart.product.id)&Q(is_thumbnail='1')).image_url,
+                'price'         : cart.product.price,
+                'order_status'  : order.order_status.name
+            } for cart in Cart.objects.filter(order_id=order.id)]
+            
+        return JsonResponse({'product_list':product_list}, status=200)
