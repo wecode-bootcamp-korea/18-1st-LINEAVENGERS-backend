@@ -10,7 +10,7 @@ from my_settings   import SECRET_KEY, ALGORITHM, EMAIL
 from account.utils import token_decorator
 from order.models  import Cart, Order
 
-class CartList(View):                           # 이름 고쳐야함
+class CartList(View):                          
     @token_decorator
     def get(self, request):
         order = Order.objects.get(user=request.user, order_status_id=1)
@@ -43,5 +43,3 @@ class CartList(View):                           # 이름 고쳐야함
             result.append(cart_information)
 
         return JsonResponse({'result':result}, status = 200)
-                
-#리스트 컴프리핸션 가능? if 가 트루일때만 담는게 아니라 if가 트루면 이거하고 담고 폴스면 저거하고 담는게 가능gkfRksk..
