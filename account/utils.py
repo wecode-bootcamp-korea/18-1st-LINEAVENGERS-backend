@@ -37,14 +37,13 @@ def token_decorator(func):
 def status_decorator(func):
     def wrapper(self, request, *arg, **karg):
         try:            
-            token = request.headers["Authorization", None]
+            token = request.headers.get("Authorization", None)
             if token :
                 token_decoded = jwt.decode(token, SECRET_KEY, ALGORITHM)
                 user          = User.objects.get(id=token_decoded['id'])
-                request.user    = user
                 request.user_id = user.id
             else:
-                request.user = None
+                request.user_id = None
 
             return func(self, request, *arg, **karg)            
         except User.DoesNotExist:
