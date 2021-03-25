@@ -21,14 +21,16 @@ class OrderView(View):
             size_id  = int(data['size_id'])
             quantity = int(data['quantity'])
             order_id = int(data.get('order_id', None))
+            CART_IN  = 1
+            ORDER_IN = 2
 
             if not Size.objects.filter(id=size_id).exists():
                 return JsonResponse({"message": "INVALID_SIZE"}, status = 400)
-            if Order.objects.filter(id=order_id, order_status=1).exists():
+            if Order.objects.filter(id=order_id, order_status=CART_IN).exists():
                 Cart.objects.filter(order_id=order_id, product_id=product_id).delete()
             order = Order.objects.create(
                 user            = User.objects.get(id=user_id),
-                order_status_id = 2,
+                order_status_id = ORDER_IN,
             )
             Cart.objects.create(
                 quantity = quantity,
@@ -55,20 +57,24 @@ class CartView(View):
 
             if not Size.objects.filter(id=size_id).exists():
                 return JsonResponse({"message": "INVALID SIZE"}, status = 400)
+
             if not Order.objects.filter(user_id=user_id, order_status=CART_IN).exists():
-                order = Order.objects.create(
+                Order.objects.create(
                     order_status_id = CART_IN,
                     user = User.objects.get(id=user_id)
                 )
-            else:
-                order = Order.objects.get(user_id=user_id, order_status=CART_IN)
-                            
-            Cart.objects.create(
-                quantity = quantity,
+            order = Order.objects.get(user_id=user_id, order_status=CART_IN)
+
+            cart, created = Cart.objects.get_or_create(
                 product  = Product.objects.get(id=product_id),
                 order    = order,
                 size     = Size.objects.get(id=size_id)
             )
+            if created:
+                cart.quantity = 0
+            cart.quantity += quantity
+            cart.save()
+
             return JsonResponse({'message':'SUCCESS'}, status = 201)                    
         except KeyError:
             return JsonResponse({"message": "KEY ERROR"}, status = 400)
