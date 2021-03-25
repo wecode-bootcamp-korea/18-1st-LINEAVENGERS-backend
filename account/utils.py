@@ -1,11 +1,9 @@
 import jwt
 import json
-import bcrypt
-
-from account.models import User
 from django.http import JsonResponse
 
-from my_settings import SECRET_KEY, ALGORITHM
+from my_settings    import SECRET_KEY, ALGORITHM
+from account.models import User
 
 def token_decorator(func):
     def wrapper(self, request, *arg, **karg):
@@ -13,21 +11,21 @@ def token_decorator(func):
             if "Authorization" not in request.headers:
                 return JsonResponse({'message':'no authorization'}, status = 400)
         
-            token = request.headers["Authorization"]
+            token         = request.headers["Authorization"]
             token_decoded = jwt.decode(token, SECRET_KEY, ALGORITHM)
-        
-            user    = User.objects.get(id=token_decoded['id'])
+
+            user            = User.objects.get(id=token_decoded['id'])
             request.user    = user
             request.user_id = user.id
 
             return func(self, request, *arg, **karg)
             
-        # except DoesNotExist:
-        #     return JsonResponse({"message":"INVALID_USER"}, status = 400)
+        except User.DoesNotExist:
+            return JsonResponse({"message":"INVALID_USER"}, status = 400)
 
-        # except MultipleObjectsReturned:
-        #     return JsonResponse({"message":"INVALID_USER"}, status = 400)
-        
+        except User.MultipleObjectsReturned:
+            return JsonResponse({"message":"INVALID_USER"}, status = 400)
+
         except KeyError:
             return JsonResponse({"message":"KEY_ERROR"}, status = 400)
         
