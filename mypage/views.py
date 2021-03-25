@@ -1,14 +1,17 @@
 import json
 import bcrypt
 import jwt
+from datetime import datetime
 
-from django.views import View
-from django.http  import JsonResponse
+from django.views                 import View
+from django.http                  import JsonResponse
+from django.db.models.query_utils import Q
 
 from account.models import User
 from account.utils  import token_decorator
 from product.models import Product, ProductImage
 from mypage.models  import Favorite, Review
+from order.models   import Order, Cart
 
 class FavoriteView(View):
     @token_decorator
@@ -67,11 +70,9 @@ class ReviewView(View):
 
     @token_decorator
     def get(self, request):
-        #user_id = request.user_id
-        user_id = 1
+        user_id      = request.user_id
         product_list = []
-        orders = Order.objects.filter(Q(user_id=user_id) & ~Q(order_status=1))
-        print(orders)
+        orders       = Order.objects.filter(Q(user_id=user_id) & ~Q(order_status=1))
         for order in orders:
             print(order.id)
             product_list +=[{

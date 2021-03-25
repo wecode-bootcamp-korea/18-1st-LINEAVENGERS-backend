@@ -110,15 +110,6 @@ class ProductListView(View):
             page     = int(request.GET.get('page', 0))
             limit    = int(request.GET.get('limit', 20))
 
-            if filter == 'RECENT':
-                reviews = Review.objects.filter(product_id=product_id).order_by('create_at')
-            elif filter == 'LATE':
-                reviews = Review.objects.filter(product_id=product_id).order_by('-create_at')
-            elif filter == 'HIGH':
-                reviews = Review.objects.filter(product_id=product_id).order_by('-rating')
-            elif filter == 'LOW':
-                reviews = Review.objects.filter(product_id=product_id).order_by('rating')
-
             products     = Product.objects.filter(Q(category__menu_id=menu) | Q(category_id=category))
             count        = products.count()
             product_list = [{
@@ -130,8 +121,8 @@ class ProductListView(View):
                                             "normal" : int(product.price),
                                             "sale"   : int(product.discount_rate)
                                             },
-                            'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                            'rating'       : Review.objects.aggregate(rating=Avg('rating'))["rating"] if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                            'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"],
+                            'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] else 0,
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
                             'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
                             'free_shipping': product.is_free_shipping
