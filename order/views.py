@@ -87,6 +87,21 @@ class CartView(View):
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
 
+    class CartDetailView(View):
+    @token_decorator
+    def delete(self, request, product_id):
+        try:
+            order = Order.objects.get(user=request.user, order_status_id=1)
+            Cart.objects.get(order_id=order.id, product_id=product_id).delete()
+
+            return JsonResponse({"message":"SUCCESS"}, status = 200)
+                
+        except Cart.DoesNotExist:
+            return JsonResponse({"message":"NONE_CART"}, status = 400)
+
+        except Cart.MultipleObjectsReturned:
+            return JsonResponse({"message":"NONE_CART"}, status = 400)
+
 class CartOrderView(View):
     @token_decorator
     def post(self, request):        
