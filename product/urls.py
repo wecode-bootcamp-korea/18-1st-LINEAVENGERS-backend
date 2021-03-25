@@ -1,14 +1,10 @@
 from django.urls import path
 
 from product.views import (
-    MainCategoryView, 
-    ProductDetailView,
-    ProductListView, 
-    MainProductView,
-    ProductListView,
-    ProductReviewView,
-    ProductQnaView,
-    MyProductQnaView,
+    MainCategoryView, ProductDetailView,
+    ProductListView,  MainProductView,
+    ProductListView,  ProductReviewView,
+    ProductQnaView,   MyProductQnaView,
     QnaDetailView)
 
 urlpatterns = [
@@ -19,5 +15,5 @@ urlpatterns = [
     path('/<int:product_id>/review', ProductReviewView.as_view()),
     path('/<int:product_id>/qna', ProductQnaView.as_view()),
     path('/<int:product_id>/myqna', MyProductQnaView.as_view()),
-    path('/<int:product_id>/qna/<int:question_id>', QnaDetailView.as_view()),
+    path('/<int:product_id>/qna/<int:question_id>', QnaDetailView.as_view())
 ]

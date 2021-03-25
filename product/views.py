@@ -18,6 +18,7 @@ from product.models import (
     ProductImage, Size, Type)
 from mypage.models  import Favorite 
 from account.utils  import token_decorator, status_decorator
+from order.models   import Cart, Order
 
 class MainCategoryView(View):
     def get(self, request):
@@ -36,21 +37,20 @@ class MainProductView(View):
     @status_decorator
     def get(self, request):
         try:
-            user_id      = request.user_id
             product_list = [
             {
                 'productId'    : product.id,
-                'thumbnailUrl' : ProductImage.objects.get(Q(product=product)&Q(is_thumbnail='1')).image_url,
+                'thumbnailUrl' : ProductImage.objects.filter(Q(product=product)&Q(is_thumbnail='1')).first().image_url if ProductImage.objects.filter(Q(product=product)&Q(is_thumbnail='1')) else "",
                 'type'         : product.type.name,
                 'productName'  : product.name,
                 'price'        : {
-                                "normal" : int(product.price),
+                                "normal" : "{:,}".format(int(product.price)),
                                 "sale"   : int(product.discount_rate)
                                 },
-                'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                'rating'       : Review.objects.aggregate(rating=Avg('rating'))["rating"] if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
+                'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                 'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                'favorite'     : Favorite.objects.filter(user_id=user_id,product=product,is_favorite=1).exists(),
+                'favorite'     : Favorite.objects.filter(user_id=1,product=product,is_favorite=1).exists(), 
                 'free_shipping': product.is_free_shipping
             } for product in Product.objects.all()[:20]]
         except ProductImage.DoesNotExist:
@@ -63,16 +63,15 @@ class ProductDetailView(View):
     @status_decorator
     def get(self, request, product_id):
         try:
-            user_id       = request.user_id
             product       = Product.objects.get(id=product_id)
             productDetail = {
                             'productId'    : product.id,
                             'imageUrls'    : [image.image_url for image in ProductImage.objects.filter(product=product)],
                             'type'         : "사이즈",
-                            'options'      : [{
-                                                "sizeId":size.id,
-                                                "name"  :size.name
-                                            } for size in Product.objects.get(id=product.id).sizes.all()],
+                            'options'      : {
+                                                "sizeId": Size.objects.get(id=1).id,
+                                                "name"  : Size.objects.get(id=1).name
+                                            },
                             'name'         : product.name,
                             'price'        : {
                                             "normal" : int(product.price),
@@ -83,18 +82,18 @@ class ProductDetailView(View):
                                                 "grade"     : review.rating,
                                                 "date"      : datetime.strftime(review.create_at, "%Y-%m-%d %H:%M:%S"),
                                                 "type"      : "사이즈",
-                                                "option"    : [{
-                                                                "sizeId":size.id,
-                                                                "name":size.name
-                                                            } for size in Product.objects.get(id=product.id).sizes.all()],
+                                                "option"    : {
+                                                                "sizeId": Size.objects.get(id=1).id,
+                                                                "name"  : Size.objects.get(id=1).name
+                                                            },
                                                 "comment"   : review.content,
                                                 "image_url" : ReviewImage.objects.filter(review=review).first().image_url
                                             } for review in Review.objects.filter(product=product)],
-                            'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                            'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1) if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                            'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
+                            'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                             'follower'     : product.follower.all().count(),
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                            'favorite'     : Favorite.objects.filter(user_id=user_id,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
+                            'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),
                             'free_shipping': product.is_free_shipping
                             }                
             return JsonResponse({'productDetail':productDetail}, status=200)
@@ -105,31 +104,29 @@ class ProductDetailView(View):
 
 class ProductListView(View):
     @status_decorator
-    def get(self, request):       
+    def get(self, request):        
         try:
             menu     = request.GET.get('menu')
             category = request.GET.get('category', None)
-            page     = int(request.GET.get('page', 0))
-            limit    = int(request.GET.get('limit', 20))
             user_id  = request.user_id
 
             products     = Product.objects.filter(Q(category__menu_id=menu) | Q(category_id=category))
             count        = products.count()
             product_list = [{
                             'productId'    : product.id,
-                            'thumbnailUrl' : ProductImage.objects.get(Q(product=product.id)&Q(is_thumbnail='1')).image_url,
+                            'thumbnailUrl' : ProductImage.objects.filter(Q(product=product)&Q(is_thumbnail='1')).first().image_url if ProductImage.objects.filter(Q(product=product)&Q(is_thumbnail='1')) else "",
                             'type'         : product.type.name,
                             'productName'  : product.name,
                             'price'        : {
                                             "normal" : int(product.price),
                                             "sale"   : int(product.discount_rate)
                                             },
-                            'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                            'rating'       : Review.objects.aggregate(rating=Avg('rating'))["rating"] if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                            'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
+                            'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                            'favorite'     : Favorite.objects.filter(user_id=user_id,product=product).exists(), 
+                            'favorite'     : Favorite.objects.filter(user_id=user_id,product=product).exists(),
                             'free_shipping': product.is_free_shipping
-            } for product in products[page:limit]]            
+            } for product in products]            
             return JsonResponse({'productList':product_list, 'count':count}, status=200)        
         except ProductImage.DoesNotExist:
             return JsonResponse({'message':'thumbnailUrl NOT EXIST'}, status=404)
@@ -157,7 +154,7 @@ class ProductReviewView(View):
             elif filter == 'LOW':
                 reviews = Review.objects.filter(product_id=product_id).order_by('rating')
             
-            user_id     = request.user_id
+            user_id = request.user_id
             review_info = {
                             'avg_rating'  : round(reviews.aggregate(rating=Avg('rating'))["rating"],1) if reviews.aggregate(rating=Avg('rating'))["rating"] else 0,
                             'total_review': reviews.aggregate(count=Count('id'))["count"]
@@ -186,33 +183,11 @@ class ProductReviewView(View):
             return JsonResponse({'message':'Review MULTIPLE RETURNED'}, status=404)
 
 class ProductQnaView(View):
+    @status_decorator
     def get(self, request, product_id):    
         page      = int(request.GET.get('page', 0))
         limit     = int(request.GET.get('limit', 20))
         questions = Question.objects.filter(product_id=product_id)
-        qna_list  = [{
-                        'q_id'        : question.id,
-                        'q_content'   : question.content,
-                        'q_create_at' : datetime.strftime(question.create_at, "%Y-%m-%d %H:%M:%S"),
-                        'q_update_at' : datetime.strftime(question.update_at, "%Y-%m-%d %H:%M:%S"),
-                        'q_user_id'   : question.user.id,
-                        'q_login_id'  : question.user.login_id,
-                        'a_id'        : question.answer_set.first().id if question.answer_set.first() else '',
-                        'a_content'   : question.answer_set.first().content if question.answer_set.first() else '',
-                        'a_create_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().create_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
-                        'a_update_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().update_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
-                        'a_seller'    : "판매자" if question.answer_set.first() else '',
-                        'status'      : question.answer_set.exists()
-        } for question in questions[page:limit]]
-        return JsonResponse({'qna_list':qna_list}, status=200)
-
-class MyProductQnaView(View):
-    @token_decorator
-    def get(self, request, product_id):    
-        page      = int(request.GET.get('page', 0))
-        limit     = int(request.GET.get('limit', 20))
-        user_id   = request.user_id
-        questions = Question.objects.filter(Q(product_id=product_id)&Q(user_id=user_id))
         qna_list  = [{
                         'q_id'        : question.id,
                         'q_content'   : question.content,
@@ -247,9 +222,32 @@ class MyProductQnaView(View):
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
 
+class MyProductQnaView(View):
+    @token_decorator
+    def get(self, request, product_id):    
+        page      = int(request.GET.get('page', 0))
+        limit     = int(request.GET.get('limit', 20))
+        user_id   = request.user_id
+        questions = Question.objects.filter(Q(product_id=product_id)&Q(user_id=user_id))
+        qna_list  = [{
+                        'q_id'        : question.id,
+                        'q_content'   : question.content,
+                        'q_create_at' : datetime.strftime(question.create_at, "%Y-%m-%d %H:%M:%S"),
+                        'q_update_at' : datetime.strftime(question.update_at, "%Y-%m-%d %H:%M:%S"),
+                        'q_user_id'   : question.user.id,
+                        'q_login_id'  : question.user.login_id,
+                        'a_id'        : question.answer_set.first().id if question.answer_set.first() else '',
+                        'a_content'   : question.answer_set.first().content if question.answer_set.first() else '',
+                        'a_create_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().create_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
+                        'a_update_at' : datetime.strftime(question.answer_set.filter(question_id=question.id).first().update_at, "%Y-%m-%d %H:%M:%S") if question.answer_set.first() else '',
+                        'a_seller'    : "판매자" if question.answer_set.first() else '',
+                        'status'      : question.answer_set.exists()
+        } for question in questions[page:limit]]
+        return JsonResponse({'qna_list':qna_list}, status=200)
+
 class QnaDetailView(View):    
     @token_decorator
-    def patch(self, request, question_id):
+    def patch(self, request, product_id, question_id):
         try:
             data             = json.loads(request.body)
             content          = data['content']
@@ -267,7 +265,7 @@ class QnaDetailView(View):
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
 
     @token_decorator
-    def delete(self, request, question_id):
+    def delete(self, request, product_id, question_id):
         try:
             question =  Question.objects.get(id=question_id)
             question.delete()
