@@ -17,29 +17,24 @@ class CartList(View):
 
         carts = order.cart_set.all()
 
-        result = []
-        for cart in carts:
-            if cart.product.is_free_shipping:
-                cart_information = {
-                    'name':cart.product.name,
-                    'price':cart.product.price,
-                    'image':cart.product.productimage_set.filter(is_thumbnail=True)[0].image_url,
-                    'quantity':cart.quantity,
-                    'size':cart.size.name,
-                    'deliveryprice':0
-                }
+        cart_delivery_3000 = [{
+            'name':cart.product.name,
+            'price':cart.product.price,
+            'image':cart.product.productimage_set.filter(is_thumbnail=True)[0].image_url,
+            'quantity':cart.quantity,
+            'size':cart.size.name,
+            'deliveryprice':3000,
+        } for cart in carts if not cart.product.is_free_shipping]
 
-                result.append(cart_information)
-            
-            cart_information = {
-                'name':cart.product.name,
-                'price':cart.product.price,
-                'image':cart.product.productimage_set.filter(is_thumbnail=True)[0].image_url,
-                'quantity':cart.quantity,
-                'size':cart.size.name,
-                'deliveryprice':3000
-            }
+        cart_delivery_0 = [{
+            'name':cart.product.name,
+            'price':cart.product.price,
+            'image':cart.product.productimage_set.filter(is_thumbnail=True)[0].image_url,
+            'quantity':cart.quantity,
+            'size':cart.size.name,
+            'deliveryprice':0,
+        } for cart in carts if cart.product.is_free_shipping]
 
-            result.append(cart_information)
+        result = cart_delivery_3000 + cart_delivery_0
 
         return JsonResponse({'result':result}, status = 200)
