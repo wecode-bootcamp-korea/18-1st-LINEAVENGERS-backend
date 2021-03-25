@@ -32,11 +32,14 @@ class CartList(View):
 class CartDetailView(View):
     @token_decorator
     def delete(self, request, product_id):
-        order = Order.objects.get(user=request.user, order_status_id=1)
-        carts = order.cart_set.all()
-    
-        for cart in carts:
-            if cart.product_id == product_id:
-               cart.delete()
-    
-        return JsonResponse({"message":"SUCCESS"}, status = 200)
+        try:
+            order = Order.objects.get(user=request.user, order_status_id=1)
+            Cart.objects.get(order_id=order.id, product_id=product_id).delete()
+
+            return JsonResponse({"message":"SUCCESS"}, status = 200)
+        
+        except Cart.DoesNotExist:
+            return JsonResponse({"message":"NONE_CART"}, status = 400)
+
+        except Cart.MultipleObjectsReturned:
+            return JsonResponse({"message":"NONE_CART"}, status = 400)
