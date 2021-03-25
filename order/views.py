@@ -1,5 +1,6 @@
 import json
 from json.decoder import JSONDecodeError
+from datetime     import datetime
 
 from django.views                 import View
 from django.http                  import JsonResponse, request
@@ -7,9 +8,10 @@ from django.db                    import transaction
 from django.db.models.query_utils import Q
 
 from account.models import User
-from product.models import Product, Size
+from product.models import Product, Size, ProductImage
 from order.models   import Cart, Order
 from account.utils  import token_decorator
+from mypage.models  import Review
 
 class OrderView(View):
     @token_decorator
@@ -105,3 +107,37 @@ class CartOrderView(View):
             return JsonResponse({"message": "NOT EXIST"}, status = 400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
+
+class ReviewView(View):
+    @token_decorator
+    def post(self, request):
+        data = json.loads(request.body)
+
+        content = data['content']
+        rating  = data['rating']
+        product = Product.objects.get(id=data['product'])
+
+        Review.objects.create(content=content, rating=rating, product=product, user=request.user)
+
+        return JsonResponse({"message":"SUCCESS"}, status = 200)
+
+    @token_decorator
+    def get(self, request):
+        user_id      = request.user_id
+        product_list = []
+        orders       = Order.objects.filter(Q(user_id=user_id) & ~Q(order_status=1))
+        for order in orders:
+            product_list +=[{
+                'order_id'      : order.id,
+                'create_at'     : datetime.strftime(order.create_at, "%Y-%m-%d %H:%M:%S"),
+                'quantity'      : cart.quantity,
+                'size_id'       : cart.size.id,
+                'size_name'     : cart.size.name,
+                'product_id'    : cart.product.id,
+                'product_name'  : cart.product.name,
+                'thumbnail_url' : ProductImage.objects.get(Q(product=cart.product.id)&Q(is_thumbnail='1')).image_url,
+                'price'         : int(cart.product.price),
+                'order_status'  : order.order_status.name
+            } for cart in Cart.objects.filter(order_id=order.id)]
+            
+        return JsonResponse({'product_list':product_list}, status=200)
