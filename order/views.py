@@ -1,9 +1,10 @@
 import json
 from json.decoder import JSONDecodeError
 
-from django.views import View
-from django.http  import JsonResponse, request
-from django.db    import transaction
+from django.views                 import View
+from django.http                  import JsonResponse, request
+from django.db                    import transaction
+from django.db.models.query_utils import Q
 
 from account.models import User
 from product.models import Product, Size
@@ -77,14 +78,14 @@ class CartOrderView(View):
     def post(self, request):        
         try:
             data     = json.loads(request.body)        
-            user_id  = int(data['user_id'])
+            user_id  = request.user.id
             order_id = int(data['order_id'])
             IN_CART  = 1
 
-            order = Order.objects.get(id=order_id, user_id=user_id)
+            order = Order.objects.get(Q(id=order_id) & Q(user_id=user_id))
             if not order.order_status_id == IN_CART:
                 return JsonResponse({"message": "INVALID_STATUS"}, status = 400)
-            Order.objects.filter(user_id=user_id, order_id=order_id).update(order_status_id=2)
+            Order.objects.filter(user_id=user_id, id=order_id).update(order_status_id=2)
             return JsonResponse({'message':'SUCCESS'}, status = 201)                    
         except KeyError:
             return JsonResponse({"message": "KEY ERROR"}, status = 400)
