@@ -17,35 +17,21 @@ class CartList(View):
 
         carts = order.cart_set.all()
 
-        cart_delivery_3000 = [{
+        result = [{
             'product_id':cart.product.id,
             'name':cart.product.name,
             'price':int(cart.product.price),
             'image':cart.product.productimage_set.filter(is_thumbnail=True)[0].image_url,
             'quantity':cart.quantity,
             'discount':int(cart.product.discount_rate),
-            'deliveryprice':3000,
-        } for cart in carts if not cart.product.is_free_shipping]
-
-        cart_delivery_0 = [{
-            'product_id':cart.product.id,
-            'name':cart.product.name,
-            'price':int(cart.product.price),
-            'image':cart.product.productimage_set.filter(is_thumbnail=True)[0].image_url,
-            'quantity':cart.quantity,
-            'discount':int(cart.product.discount_rate),
-            'deliveryprice':0,
-        } for cart in carts if cart.product.is_free_shipping]
-
-        result = cart_delivery_3000 + cart_delivery_0
+            'deliveryprice':3000 if cart.product.is_free_shipping else 0,
+        } for cart in carts]
 
         return JsonResponse({'result':result}, status = 200)
 
+class CartDetailView(View):
     @token_decorator
-    def post(self, request):
-        data = json.loads(request.body)
-        product_id = data['product_id']
-
+    def delete(self, request, product_id):
         order = Order.objects.get(user=request.user, order_status_id=1)
         carts = order.cart_set.all()
     
