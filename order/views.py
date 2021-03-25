@@ -86,7 +86,20 @@ class CartView(View):
             return JsonResponse({"message": "MultipleObjectsReturned ERROR"}, status = 400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
+    
+    @token_decorator
+    def delete(self, request, product_id):
+        try:
+            order = Order.objects.get(user=request.user, order_status_id=1)
+            Cart.objects.get(order_id=order.id, product_id=product_id).delete()
 
+            return JsonResponse({"message":"SUCCESS"}, status = 200)
+            
+        except Cart.DoesNotExist:
+            return JsonResponse({"message":"NONE_CART"}, status = 400)
+        except Cart.MultipleObjectsReturned:
+            return JsonResponse({"message":"NONE_CART"}, status = 400)
+    
 class CartOrderView(View):
     @token_decorator
     def post(self, request):        
@@ -108,6 +121,24 @@ class CartOrderView(View):
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
 
+    @token_decorator
+    def get(self, request):
+        order = Order.objects.get(user=request.user, order_status_id=1)
+
+        carts = order.cart_set.all()
+
+        result = [{
+            'product_id':cart.product.id,
+            'name':cart.product.name,
+            'price':int(cart.product.price),
+            'image':cart.product.productimage_set.filter(is_thumbnail=True)[0].image_url,
+            'quantity':cart.quantity,
+            'discount':int(cart.product.discount_rate),
+            'deliveryprice':3000 if cart.product.is_free_shipping else 0
+        } for cart in carts]
+
+        return JsonResponse({'result':result}, status = 200)
+        
 class ReviewView(View):
     @token_decorator
     def post(self, request):
@@ -141,3 +172,4 @@ class ReviewView(View):
             } for cart in Cart.objects.filter(order_id=order.id)]
             
         return JsonResponse({'product_list':product_list}, status=200)
+
