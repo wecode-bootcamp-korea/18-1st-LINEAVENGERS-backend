@@ -49,7 +49,7 @@ class FavoriteView(View):
         result = [{
             'name':favorite.product.name,
             'user_name':favorite.user.name,
-            'price':favorite.product.price,
+            'price':int(favorite.product.price),
             'image':favorite.product.productimage_set.filter(is_thumbnail=True)[0].image_url
         } for favorite in favorites]
         
@@ -74,7 +74,6 @@ class ReviewView(View):
         product_list = []
         orders       = Order.objects.filter(Q(user_id=user_id) & ~Q(order_status=1))
         for order in orders:
-            print(order.id)
             product_list +=[{
                 'order_id'      : order.id,
                 'create_at'     : datetime.strftime(order.create_at, "%Y-%m-%d %H:%M:%S"),
@@ -84,7 +83,7 @@ class ReviewView(View):
                 'product_id'    : cart.product.id,
                 'product_name'  : cart.product.name,
                 'thumbnail_url' : ProductImage.objects.get(Q(product=cart.product.id)&Q(is_thumbnail='1')).image_url,
-                'price'         : cart.product.price,
+                'price'         : int(cart.product.price),
                 'order_status'  : order.order_status.name
             } for cart in Cart.objects.filter(order_id=order.id)]
             

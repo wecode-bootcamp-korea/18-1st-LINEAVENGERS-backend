@@ -17,7 +17,7 @@ from product.models import (
     Product, 
     ProductImage, Size, Type)
 from mypage.models  import Favorite 
-from account.utils  import token_decorator
+from account.utils  import token_decorator, status_decorator
 
 class MainCategoryView(View):
     def get(self, request):
@@ -33,9 +33,10 @@ class MainCategoryView(View):
         return JsonResponse({'menuList':menu_list}, status=200)
 
 class MainProductView(View):
-    #@token_decorator2
+    @status_decorator
     def get(self, request):
         try:
+            user_id      = request.user_id
             product_list = [
             {
                 'productId'    : product.id,
@@ -46,10 +47,10 @@ class MainProductView(View):
                                 "normal" : int(product.price),
                                 "sale"   : int(product.discount_rate)
                                 },
-                'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                'rating'       : Review.objects.aggregate(rating=Avg('rating'))["rating"] if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"],
+                'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] else 0,
                 'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                'favorite'     : Favorite.objects.filter(user_id=1,product=product,is_favorite=1).exists(),   #데코레이터가 반영되면 user_id값 변경 .
+                'favorite'     : Favorite.objects.filter(user_id=user_id,product=product,is_favorite=1).exists(),
                 'free_shipping': product.is_free_shipping
             } for product in Product.objects.all()[:20]]
         except ProductImage.DoesNotExist:
@@ -59,9 +60,10 @@ class MainProductView(View):
         return JsonResponse({'productList':product_list}, status=200)
 
 class ProductDetailView(View):
-    #@decorator
+    @status_decorator
     def get(self, request, product_id):
         try:
+            user_id       = request.user_id
             product       = Product.objects.get(id=product_id)
             productDetail = {
                             'productId'    : product.id,
@@ -86,13 +88,13 @@ class ProductDetailView(View):
                                                                 "name":size.name
                                                             } for size in Product.objects.get(id=product.id).sizes.all()],
                                                 "comment"   : review.content,
-                                                "image_url" : ReviewImage.objects.filter(review=review).first().image_url
+                                                "image_url" : ReviewImage.objects.filter(review=review).first().image_url if ReviewImage.objects.filter(review=review) else ''
                                             } for review in Review.objects.filter(product=product)],
-                            'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                            'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1) if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                            'review'       : Review.objects.filter(product_id=product_id).aggregate(count=Count('id'))["count"],
+                            'rating'       : round(Review.objects.filter(product_id=product_id).aggregate(rating=Avg('rating'))["rating"],1) if Review.objects.filter(product_id=product_id).aggregate(rating=Avg('rating'))["rating"] else 0,
                             'follower'     : product.follower.all().count(),
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                            'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
+                            'favorite'     : Favorite.objects.filter(user_id=user_id,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
                             'free_shipping': product.is_free_shipping
                             }                
             return JsonResponse({'productDetail':productDetail}, status=200)
@@ -102,13 +104,14 @@ class ProductDetailView(View):
             return JsonResponse({'message':'PRODUCT MULTIPLE RETURNED'}, status=404)
 
 class ProductListView(View):
-    #@decorator
-    def get(self, request):        
+    @status_decorator
+    def get(self, request):       
         try:
             menu     = request.GET.get('menu')
             category = request.GET.get('category', None)
             page     = int(request.GET.get('page', 0))
             limit    = int(request.GET.get('limit', 20))
+            user_id  = request.user_id
 
             products     = Product.objects.filter(Q(category__menu_id=menu) | Q(category_id=category))
             count        = products.count()
@@ -124,7 +127,7 @@ class ProductListView(View):
                             'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"],
                             'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] else 0,
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                            'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
+                            'favorite'     : Favorite.objects.filter(user_id=user_id,product=product).exists(), 
                             'free_shipping': product.is_free_shipping
             } for product in products[page:limit]]            
             return JsonResponse({'productList':product_list, 'count':count}, status=200)        
@@ -138,6 +141,7 @@ class ProductListView(View):
             return JsonResponse({'message':'thumbnailUrl MULTIPLE RETURNED'}, status=404)
 
 class ProductReviewView(View):
+    @status_decorator
     def get(self, request, product_id):
         try:
             page    = int(request.GET.get('page', 0))
@@ -153,11 +157,10 @@ class ProductReviewView(View):
             elif filter == 'LOW':
                 reviews = Review.objects.filter(product_id=product_id).order_by('rating')
             
-            #user_id = request.user_id
-            user_id     = 1 #테스트용.
+            user_id     = request.user_id
             review_info = {
-                            'avg_rating'  : round(reviews.aggregate(rating=Avg('rating'))["rating"],1) if reviews.aggregate(rating=Avg('rating'))["rating"] else 0,
-                            'total_review': reviews.aggregate(count=Count('id'))["count"]
+                            'avg_rating'  : round(reviews.filter(product_id=product_id).aggregate(rating=Avg('rating'))["rating"],1) if reviews.filter(product_id=product_id).aggregate(rating=Avg('rating'))["rating"] else 0,
+                            'total_review': reviews.filter(product_id=product_id).aggregate(count=Count('id'))["count"]
             }
             review_list = [{
                             'review_id'    : review.id,
@@ -167,7 +170,7 @@ class ProductReviewView(View):
                             'user_id'      : review.user.id,
                             'login_id'     : review.user.login_id,
                             'size_name'    : Size.objects.get(id=1).name,
-                            'review_image' : ReviewImage.objects.filter(review_id=review.id).first().image_url,
+                            'review_image' : ReviewImage.objects.filter(review_id=review.id).first().image_url if ReviewImage.objects.filter(review_id=review.id) else "",
                             'review_images': [images.image_url for images in ReviewImage.objects.filter(review_id=review.id)],
                             'recommand'    : ReviewRecommand.objects.filter(review_id=review.id).count(),
                             'my_recommand' : Review.objects.get(id=review.id).recommander.filter(id=user_id).exists()
@@ -183,7 +186,6 @@ class ProductReviewView(View):
             return JsonResponse({'message':'Review MULTIPLE RETURNED'}, status=404)
 
 class ProductQnaView(View):
-    #@token_decorator
     def get(self, request, product_id):    
         page      = int(request.GET.get('page', 0))
         limit     = int(request.GET.get('limit', 20))
