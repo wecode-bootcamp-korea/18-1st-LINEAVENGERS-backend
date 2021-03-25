@@ -25,7 +25,7 @@ class Type(models.Model):
     name = models.CharField(max_length=20)
 
     class Meta:
-        db_table = "types"
+        db_table = "types"        
 
 class Product(models.Model):
     name             = models.CharField(max_length=100)
