@@ -51,16 +51,18 @@ class CartView(View):
             user_id  = request.user.id
             size_id  = int(data['size_id'])
             quantity = int(data['quantity'])
+            CART_IN  = 1
 
             if not Size.objects.filter(id=size_id).exists():
                 return JsonResponse({"message": "INVALID SIZE"}, status = 400)
-            if Order.objects.filter(user_id=user_id, order_status=1).exists():
-                order = Order.objects.filter(user_id=user_id, order_status=1).last()
-            else:
+            if not Order.objects.filter(user_id=user_id, order_status=CART_IN).exists():
                 order = Order.objects.create(
-                    order_status_id = 1,
+                    order_status_id = CART_IN,
                     user = User.objects.get(id=user_id)
-                )            
+                )
+            else:
+                order = Order.objects.get(user_id=user_id, order_status=CART_IN)
+                            
             Cart.objects.create(
                 quantity = quantity,
                 product  = Product.objects.get(id=product_id),
@@ -70,6 +72,10 @@ class CartView(View):
             return JsonResponse({'message':'SUCCESS'}, status = 201)                    
         except KeyError:
             return JsonResponse({"message": "KEY ERROR"}, status = 400)
+        except Cart.DoesNotExist:
+            return JsonResponse({"message": "DoesNotExist ERROR"}, status = 400)
+        except Cart.MultipleObjectsReturned:
+            return JsonResponse({"message": "MultipleObjectsReturned ERROR"}, status = 400)
         except JSONDecodeError:
             return JsonResponse({'message':'JSON DECODE ERROR'}, status=400)
 
