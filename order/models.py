@@ -52,7 +52,7 @@ class Order(models.Model):
         db_table = "orders"
 
 class Cart(models.Model):
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(default=0)
     product  = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     order    = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
     size     = models.ForeignKey(Size, on_delete=models.CASCADE, null=True)
