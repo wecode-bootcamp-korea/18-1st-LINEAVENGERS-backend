@@ -40,15 +40,15 @@ class MainProductView(View):
             product_list = [
             {
                 'productId'    : product.id,
-                'thumbnailUrl' : ProductImage.objects.get(Q(product=product)&Q(is_thumbnail='1')).image_url,
+                'thumbnailUrl' : ProductImage.objects.filter(Q(product=product)&Q(is_thumbnail='1')).first().image_url if ProductImage.objects.filter(Q(product=product)&Q(is_thumbnail='1')) else "",
                 'type'         : product.type.name,
                 'productName'  : product.name,
                 'price'        : {
-                                "normal" : int(product.price),
+                                "normal" : "{:,}".format(int(product.price)),
                                 "sale"   : int(product.discount_rate)
                                 },
-                'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                'rating'       : Review.objects.aggregate(rating=Avg('rating'))["rating"] if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
+                'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                 'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
                 'favorite'     : Favorite.objects.filter(user_id=1,product=product,is_favorite=1).exists(), 
                 'free_shipping': product.is_free_shipping
@@ -69,8 +69,8 @@ class ProductDetailView(View):
                             'imageUrls'    : [image.image_url for image in ProductImage.objects.filter(product=product)],
                             'type'         : "사이즈",
                             'options'      : {
-                                                "sizeId": Product.objects.get(id=product.id).sizes.first().id,
-                                                "name"  : Product.objects.get(id=product.id).sizes.first().name
+                                                "sizeId": Size.objects.get(id=1).id,
+                                                "name"  : Size.objects.get(id=1).name
                                             },
                             'name'         : product.name,
                             'price'        : {
@@ -83,17 +83,17 @@ class ProductDetailView(View):
                                                 "date"      : datetime.strftime(review.create_at, "%Y-%m-%d %H:%M:%S"),
                                                 "type"      : "사이즈",
                                                 "option"    : {
-                                                                "sizeId": Product.objects.get(id=product.id).sizes.first().id,
-                                                                "name"  : Product.objects.get(id=product.id).sizes.first().name
+                                                                "sizeId": Size.objects.get(id=1).id,
+                                                                "name"  : Size.objects.get(id=1).name
                                                             },
                                                 "comment"   : review.content,
                                                 "image_url" : ReviewImage.objects.filter(review=review).first().image_url
                                             } for review in Review.objects.filter(product=product)],
-                            'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                            'rating'       : round(Review.objects.aggregate(rating=Avg('rating'))["rating"],1) if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                            'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
+                            'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                             'follower'     : product.follower.all().count(),
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                            'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
+                            'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),
                             'free_shipping': product.is_free_shipping
                             }                
             return JsonResponse({'productDetail':productDetail}, status=200)
@@ -108,22 +108,23 @@ class ProductListView(View):
         try:
             menu     = request.GET.get('menu')
             category = request.GET.get('category', None)
+            user_id  = request.user_id
 
             products     = Product.objects.filter(Q(category__menu_id=menu) | Q(category_id=category))
             count        = products.count()
             product_list = [{
                             'productId'    : product.id,
-                            'thumbnailUrl' : ProductImage.objects.get(Q(product=product.id)&Q(is_thumbnail='1')).image_url,
+                            'thumbnailUrl' : ProductImage.objects.filter(Q(product=product)&Q(is_thumbnail='1')).first().image_url if ProductImage.objects.filter(Q(product=product)&Q(is_thumbnail='1')) else "",
                             'type'         : product.type.name,
                             'productName'  : product.name,
                             'price'        : {
                                             "normal" : int(product.price),
                                             "sale"   : int(product.discount_rate)
                                             },
-                            'review'       : Review.objects.aggregate(count=Count('id'))["count"],
-                            'rating'       : Review.objects.aggregate(rating=Avg('rating'))["rating"] if Review.objects.aggregate(rating=Avg('rating'))["rating"] else 0,
+                            'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
+                            'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                            'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
+                            'favorite'     : Favorite.objects.filter(user_id=user_id,product=product).exists(),
                             'free_shipping': product.is_free_shipping
             } for product in products]            
             return JsonResponse({'productList':product_list, 'count':count}, status=200)        
