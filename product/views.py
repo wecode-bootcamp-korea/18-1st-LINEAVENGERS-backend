@@ -17,7 +17,7 @@ from product.models import (
     Product, 
     ProductImage, Size, Type)
 from mypage.models  import Favorite 
-from account.utils  import token_decorator
+from account.utils  import token_decorator, status_decorator
 from order.models   import Cart, Order
 
 class MainCategoryView(View):
@@ -34,7 +34,7 @@ class MainCategoryView(View):
         return JsonResponse({'menuList':menu_list}, status=200)
 
 class MainProductView(View):
-    #@token_decorator2
+    @status_decorator
     def get(self, request):
         try:
             product_list = [
@@ -60,7 +60,7 @@ class MainProductView(View):
         return JsonResponse({'productList':product_list}, status=200)
 
 class ProductDetailView(View):
-    #@decorator
+    @status_decorator
     def get(self, request, product_id):
         try:
             product       = Product.objects.get(id=product_id)
@@ -103,22 +103,11 @@ class ProductDetailView(View):
             return JsonResponse({'message':'PRODUCT MULTIPLE RETURNED'}, status=404)
 
 class ProductListView(View):
-    #@decorator
+    @status_decorator
     def get(self, request):        
         try:
             menu     = request.GET.get('menu')
             category = request.GET.get('category', None)
-            page     = int(request.GET.get('page', 0))
-            limit    = int(request.GET.get('limit', 20))
-
-            if filter == 'RECENT':
-                reviews = Review.objects.filter(product_id=product_id).order_by('create_at')
-            elif filter == 'LATE':
-                reviews = Review.objects.filter(product_id=product_id).order_by('-create_at')
-            elif filter == 'HIGH':
-                reviews = Review.objects.filter(product_id=product_id).order_by('-rating')
-            elif filter == 'LOW':
-                reviews = Review.objects.filter(product_id=product_id).order_by('rating')
 
             products     = Product.objects.filter(Q(category__menu_id=menu) | Q(category_id=category))
             count        = products.count()
@@ -136,7 +125,7 @@ class ProductListView(View):
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
                             'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),   #데코레이터가 반영되면 user_id값 변경 .,
                             'free_shipping': product.is_free_shipping
-            } for product in products[page:limit]]            
+            } for product in products]            
             return JsonResponse({'productList':product_list, 'count':count}, status=200)        
         except ProductImage.DoesNotExist:
             return JsonResponse({'message':'thumbnailUrl NOT EXIST'}, status=404)
@@ -148,6 +137,7 @@ class ProductListView(View):
             return JsonResponse({'message':'thumbnailUrl MULTIPLE RETURNED'}, status=404)
 
 class ProductReviewView(View):
+    @status_decorator
     def get(self, request, product_id):
         try:
             page    = int(request.GET.get('page', 0))
@@ -163,8 +153,7 @@ class ProductReviewView(View):
             elif filter == 'LOW':
                 reviews = Review.objects.filter(product_id=product_id).order_by('rating')
             
-            #user_id = request.user_id
-            user_id     = 1 #테스트용.
+            user_id = request.user_id
             review_info = {
                             'avg_rating'  : round(reviews.aggregate(rating=Avg('rating'))["rating"],1) if reviews.aggregate(rating=Avg('rating'))["rating"] else 0,
                             'total_review': reviews.aggregate(count=Count('id'))["count"]
@@ -193,7 +182,7 @@ class ProductReviewView(View):
             return JsonResponse({'message':'Review MULTIPLE RETURNED'}, status=404)
 
 class ProductQnaView(View):
-    #@token_decorator
+    @status_decorator
     def get(self, request, product_id):    
         page      = int(request.GET.get('page', 0))
         limit     = int(request.GET.get('limit', 20))
@@ -257,7 +246,7 @@ class MyProductQnaView(View):
 
 class QnaDetailView(View):    
     @token_decorator
-    def patch(self, request, question_id):
+    def patch(self, request, product_id, question_id):
         try:
             data             = json.loads(request.body)
             content          = data['content']
