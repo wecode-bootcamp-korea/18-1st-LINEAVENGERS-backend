@@ -8,7 +8,7 @@ from account.models import User
 def token_decorator(func):
     def wrapper(self, request, *arg, **karg):
         try:
-            if not request.headers.get('Authorization', None):
+            if not request.headers.get('Authorization'):
                 return JsonResponse({'message':'no authorization'}, status = 400)
         
             token         = request.headers['Authorization']
