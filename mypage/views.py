@@ -1,5 +1,6 @@
 import json
 import bcrypt
+from django.db.models.query_utils import Q
 import jwt
 
 from django.views import View
@@ -13,31 +14,32 @@ from mypage.models  import Favorite, Review
 class FavoriteView(View):
     @token_decorator
     def post(self, request):
-        data = json.loads(request.body)
-        
-        product = data['product']
-        product = Product.objects.get(id=product)
+        try:
+            data = json.loads(request.body)
+            
+            product = data['product_id']
+            product = Product.objects.get(id=product)
 
-        if Favorite.objects.filter(user=request.user).exists():
-            favorite_user = Favorite.objects.get(id=request.user.id)
+            if Favorite.objects.filter(Q(user=request.user)&Q(product_id=product.id)).exists():
+                favorite_user = Favorite.objects.get(Q(user_id=request.user.id)&Q(product_id=product.id))
 
-            if favorite_user.is_favorite:
-                favorite_user.is_favorite = False
+                if favorite_user.is_favorite:
+                    favorite_user.is_favorite = False
+                    favorite_user.save()
+                    return JsonResponse({'message':'SUCCESS'}, status = 201)
+
+                favorite_user.is_favorite = True
                 favorite_user.save()
-                return JsonResponse({'message':'SUCCESS'}, status = 200)
-
-            favorite_user.is_favorite = True
-            favorite_user.save()
-
-            return JsonResponse({'message':'SUCCESS'}, status = 200)
-        
-        Favorite.objects.create(
-            is_favorite=True,
-            user=user,
-            product=product,
-        )
-
-        return JsonResponse({'message':'SUCCESS', }, status = 200)
+                return JsonResponse({'message':'SUCCESS'}, status = 201)
+            
+            Favorite.objects.create(
+                is_favorite = True,
+                user        = request.user,
+                product     = product,
+            )
+            return JsonResponse({'message':'SUCCESS'}, status = 201)
+        except Favorite.DoesNotExist:
+            return JsonResponse({'message':'DoesNotExist ERROR'}, status = 400)
 
     @token_decorator
     def get(self, request):
@@ -46,21 +48,8 @@ class FavoriteView(View):
         result = [{
             'name':favorite.product.name,
             'user_name':favorite.user.name,
-            'price':favorite.product.price,
-            'image':favorite.product.productimage_set.filter(is_thumbnail=True)[0].image_url
+            'price':int(favorite.product.price),
+            'image':favorite.product.productimage_set.filter(is_thumbnail=True)[0].image_url if favorite.product.productimage_set.filter(is_thumbnail=True) else ""
         } for favorite in favorites]
         
         return JsonResponse({"result":result}, status = 200)
-        
-class ReviewView(View):
-    @token_decorator
-    def post(self, request):
-        data = json.loads(request.body)
-
-        content = data['content']
-        rating  = data['rating']
-        product = Product.objects.get(id=data['product'])
-
-        Review.objects.create(content=content, rating=rating, product=product, user=request.user)
-
-        return JsonResponse({"message":"SUCCESS"}, status = 200)
