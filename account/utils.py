@@ -8,10 +8,10 @@ from account.models import User
 def token_decorator(func):
     def wrapper(self, request, *arg, **karg):
         try:
-            if "Authorization" not in request.headers:
+            if not request.headers.get('Authorization'):
                 return JsonResponse({'message':'no authorization'}, status = 400)
         
-            token         = request.headers["Authorization"]
+            token         = request.headers['Authorization']
             token_decoded = jwt.decode(token, SECRET_KEY, ALGORITHM)
 
             user            = User.objects.get(id=token_decoded['id'])
@@ -37,7 +37,8 @@ def token_decorator(func):
 def status_decorator(func):
     def wrapper(self, request, *arg, **karg):
         try:            
-            token = request.headers.get("Authorization", None)
+            token = request.headers.get('Authorization', None)
+
             if token :
                 token_decoded = jwt.decode(token, SECRET_KEY, ALGORITHM)
                 user          = User.objects.get(id=token_decoded['id'])

@@ -37,6 +37,7 @@ class MainProductView(View):
     @status_decorator
     def get(self, request):
         try:
+            user_id      = request.user_id
             product_list = [
             {
                 'productId'    : product.id,
@@ -50,7 +51,7 @@ class MainProductView(View):
                 'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
                 'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                 'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                'favorite'     : Favorite.objects.filter(user_id=1,product=product,is_favorite=1).exists(), 
+                'favorite'     : True if Favorite.objects.filter(Q(user_id=user_id)&Q(product_id=product.id)&Q(is_favorite=True)) else False,
                 'free_shipping': product.is_free_shipping
             } for product in Product.objects.all()[:20]]
         except ProductImage.DoesNotExist:
@@ -63,6 +64,7 @@ class ProductDetailView(View):
     @status_decorator
     def get(self, request, product_id):
         try:
+            user_id       = request.user_id
             product       = Product.objects.get(id=product_id)
             productDetail = {
                             'productId'    : product.id,
@@ -87,13 +89,13 @@ class ProductDetailView(View):
                                                                 "name"  : Size.objects.get(id=1).name
                                                             },
                                                 "comment"   : review.content,
-                                                "image_url" : ReviewImage.objects.filter(review=review).first().image_url
+                                                "image_url" : ReviewImage.objects.filter(review=review).first().image_url if ReviewImage.objects.filter(review=review) else ""
                                             } for review in Review.objects.filter(product=product)],
                             'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
                             'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                             'follower'     : product.follower.all().count(),
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                            'favorite'     : Favorite.objects.filter(user_id=1,product=product).exists(),
+                            'favorite'     : True if Favorite.objects.filter(Q(user_id=user_id)&Q(product_id=product.id)&Q(is_favorite=True)) else False,
                             'free_shipping': product.is_free_shipping
                             }                
             return JsonResponse({'productDetail':productDetail}, status=200)
@@ -110,7 +112,7 @@ class ProductListView(View):
             category = request.GET.get('category', None)
             user_id  = request.user_id
 
-            products     = Product.objects.filter(Q(category__menu_id=menu) | Q(category_id=category))
+            products     = Product.objects.filter(Q(category__menu_id=menu) & Q(category_id=category)) if category else Product.objects.filter(Q(category__menu_id=menu))
             count        = products.count()
             product_list = [{
                             'productId'    : product.id,
@@ -124,7 +126,7 @@ class ProductListView(View):
                             'review'       : Review.objects.filter(product_id=product.id).aggregate(count=Count('id'))["count"] if Review.objects.filter(product_id=product.id) else 0,
                             'rating'       : Review.objects.filter(product_id=product.id).aggregate(rating=Avg('rating'))["rating"] if Review.objects.filter(product_id=product.id) else 0,
                             'createDate'   : datetime.strftime(product.create_at, "%Y-%m-%d %H:%M:%S"),
-                            'favorite'     : Favorite.objects.filter(user_id=user_id,product=product).exists(),
+                            'favorite'     : True if Favorite.objects.filter(Q(user_id=user_id)&Q(product_id=product.id)&Q(is_favorite=True)) else False,
                             'free_shipping': product.is_free_shipping
             } for product in products]            
             return JsonResponse({'productList':product_list, 'count':count}, status=200)        
@@ -167,7 +169,7 @@ class ProductReviewView(View):
                             'user_id'      : review.user.id,
                             'login_id'     : review.user.login_id,
                             'size_name'    : Size.objects.get(id=1).name,
-                            'review_image' : ReviewImage.objects.filter(review_id=review.id).first().image_url,
+                            'review_image' : ReviewImage.objects.filter(review_id=review.id).first().image_url if ReviewImage.objects.filter(review_id=review.id) else "",
                             'review_images': [images.image_url for images in ReviewImage.objects.filter(review_id=review.id)],
                             'recommand'    : ReviewRecommand.objects.filter(review_id=review.id).count(),
                             'my_recommand' : Review.objects.get(id=review.id).recommander.filter(id=user_id).exists()
