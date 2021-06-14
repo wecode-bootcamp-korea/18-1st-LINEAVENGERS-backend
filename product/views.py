@@ -145,6 +145,8 @@ class ProductReviewView(View):
         try:
             page    = int(request.GET.get('page', 0))
             limit   = int(request.GET.get('limit', 20))
+            offset  = page * limit
+            limit   = offset + limit
             filter  = request.GET.get('filter', 'RECENT')
             
             if filter == 'RECENT':
@@ -173,7 +175,7 @@ class ProductReviewView(View):
                             'review_images': [images.image_url for images in ReviewImage.objects.filter(review_id=review.id)],
                             'recommand'    : ReviewRecommand.objects.filter(review_id=review.id).count(),
                             'my_recommand' : Review.objects.get(id=review.id).recommander.filter(id=user_id).exists()
-            } for review in reviews[page:limit]]
+            } for review in reviews[offset:limit]]
             return JsonResponse({'review_info':review_info, 'review_list':review_list}, status=200)        
         except Size.DoesNotExist:
             return JsonResponse({'message':'Size NOT EXIST'}, status=404)
