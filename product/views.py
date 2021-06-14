@@ -143,9 +143,9 @@ class ProductReviewView(View):
     @status_decorator
     def get(self, request, product_id):
         try:
-            page    = int(request.GET.get('page', 0))
+            page    = int(request.GET.get('page', 1))
             limit   = int(request.GET.get('limit', 20))
-            offset  = page * limit
+            offset  = (page-1) * limit
             limit   = offset + limit
             filter  = request.GET.get('filter', 'RECENT')
             
